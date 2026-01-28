@@ -3,19 +3,19 @@
     <div class="title">{{ title }}</div>
 
     <div class="values">
-      <div class="value">
-        <div class="label">{{ leftLabel }}</div>
-        <div class="num">{{ fmt(left) }}</div>
+      <div class="block">
+        <div class="lbl">{{ leftLabel }}</div>
+        <div class="val">{{ fmt(left) }}</div>
       </div>
 
-      <div class="value">
-        <div class="label">{{ rightLabel }}</div>
-        <div class="num">{{ fmt(right) }}</div>
+      <div class="block">
+        <div class="lbl">{{ rightLabel }}</div>
+        <div class="val">{{ fmt(right) }}</div>
       </div>
 
       <div class="delta" :class="deltaClass">
-        <div class="label">Δ</div>
-        <div class="num">{{ fmt(delta) }}</div>
+        <div class="lbl">Diff</div>
+        <div class="val">{{ delta > 0 ? '+' : '' }}{{ fmt(delta) }}</div>
       </div>
     </div>
   </div>
@@ -30,8 +30,8 @@ const props = defineProps<{
   rightLabel?: string;
 }>();
 
-const leftLabel = computed(() => props.leftLabel ?? "A");
-const rightLabel = computed(() => props.rightLabel ?? "B");
+const leftLabel = computed(() => props.leftLabel?.split('·')[0].trim() ?? "A");
+const rightLabel = computed(() => props.rightLabel?.split('·')[0].trim() ?? "B");
 
 const delta = computed(() => (Number(props.left) || 0) - (Number(props.right) || 0));
 const deltaClass = computed(() => {
@@ -49,22 +49,48 @@ function fmt(n: any) {
 
 <style scoped>
 .card {
+  background: var(--bg);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   border-radius: 16px;
-  padding: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
 }
-.title { font-weight: 800; color: var(--text); margin-bottom: 10px; }
-.values { display: grid; grid-template-columns: 1fr 1fr 0.9fr; gap: 10px; }
-.value, .delta {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px;
-  background: rgba(0,0,0,0.15);
+
+.title { 
+  font-weight: 700; 
+  color: var(--muted); 
+  font-size: 13px; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px; 
+  margin-bottom: 12px; 
 }
-.label { font-size: 12px; color: var(--muted); }
-.num { font-size: 22px; font-weight: 900; margin-top: 4px; }
-.delta.pos { border-color: rgba(34,197,94,0.45); }
-.delta.neg { border-color: rgba(239,68,68,0.45); }
-.delta.neu { border-color: var(--border); }
+
+.values { display: flex; gap: 8px; justify-content: space-between; align-items: stretch; }
+
+.block, .delta {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.block { background: var(--panel); border: 1px solid var(--border); }
+
+.delta { border: 1px solid transparent; align-items: center; background: var(--panel); }
+.delta.pos { background: rgba(34,197,94,0.1); color: #16a34a; border-color: rgba(34,197,94,0.2); }
+.delta.neg { background: rgba(239,68,68,0.1); color: #dc2626; border-color: rgba(239,68,68,0.2); }
+.delta.neu { background: var(--panel); border-color: var(--border); color: var(--muted); }
+
+[data-theme="dark"] .delta.pos { background: rgba(34,197,94,0.15); color: #4ade80; }
+[data-theme="dark"] .delta.neg { background: rgba(239,68,68,0.15); color: #f87171; }
+
+.lbl { font-size: 10px; color: var(--muted); margin-bottom: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+.delta .lbl { color: inherit; opacity: 0.8; }
+
+.val { font-size: 18px; font-weight: 800; color: var(--text); }
+.delta .val { color: inherit; }
 </style>

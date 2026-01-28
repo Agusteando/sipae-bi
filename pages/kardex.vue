@@ -1,27 +1,73 @@
 <template>
   <div class="page">
     <div class="head">
-      <div>
-        <div class="h1">Kardex BI</div>
-        <div class="sub">Comparación flexible por lado: Plantel + Mes + Año</div>
+      <div class="head-info">
+        <h1 class="h1">Dashboard Kardex</h1>
+        <div class="sub">Inteligencia de Negocios y Métricas Operativas</div>
       </div>
+      
+      <!-- View Toggle -->
+      <div class="view-toggles">
+        <button 
+          class="view-btn" 
+          :class="{ active: viewMode === 'compare' }" 
+          @click="viewMode = 'compare'"
+        >
+          Comparativo (A/B)
+        </button>
+        <button 
+          class="view-btn" 
+          :class="{ active: viewMode === 'global' }" 
+          @click="viewMode = 'global'"
+        >
+          Vista Global
+        </button>
+      </div>
+    </div>
 
+    <!-- GLOBAL VIEW -->
+    <div v-if="viewMode === 'global'" class="animate-fade">
+      <section class="section">
+        <div class="sectionTitle">Panorama Global de Entregas</div>
+        <div class="control-bar">
+           <div class="field-inline">
+            <label>Mes</label>
+            <select v-model.number="monthA" class="mini-select">
+              <option v-for="m in 12" :key="m" :value="m">{{ monthLabel(m) }}</option>
+            </select>
+            <input type="number" class="mini-input" v-model.number="yearA" />
+          </div>
+        </div>
+        <GlobalToDetailChart 
+          title="Entregas por Plantel (Drill-down)" 
+          :rows="globalRows" 
+        />
+      </section>
+    </div>
+
+    <!-- COMPARISON VIEW (Original Logic Preserved) -->
+    <div v-else class="animate-fade">
       <div class="filtersRow">
         <!-- SIDE A -->
         <div class="filterCard">
-          <div class="filterTitle">Lado A</div>
+          <div class="cardHeader">
+            <div class="indicator a"></div>
+            <div class="filterTitle">Lado A</div>
+          </div>
           <div class="grid">
             <div class="field">
               <label>Plantel</label>
               <select v-model="plantelA">
                 <option v-for="p in planteles" :key="p.code" :value="p.code">
-                  {{ p.label }} ({{ p.code }})
+                  {{ p.label }}
                 </option>
               </select>
             </div>
             <div class="field">
               <label>Mes</label>
-              <input type="number" min="1" max="12" v-model.number="monthA" />
+              <select v-model.number="monthA">
+                <option v-for="m in 12" :key="m" :value="m">{{ monthLabel(m) }}</option>
+              </select>
             </div>
             <div class="field">
               <label>Año</label>
@@ -33,19 +79,24 @@
 
         <!-- SIDE B -->
         <div class="filterCard">
-          <div class="filterTitle">Lado B</div>
+          <div class="cardHeader">
+            <div class="indicator b"></div>
+            <div class="filterTitle">Lado B</div>
+          </div>
           <div class="grid">
             <div class="field">
               <label>Plantel</label>
               <select v-model="plantelB">
                 <option v-for="p in planteles" :key="p.code" :value="p.code">
-                  {{ p.label }} ({{ p.code }})
+                  {{ p.label }}
                 </option>
               </select>
             </div>
             <div class="field">
               <label>Mes</label>
-              <input type="number" min="1" max="12" v-model.number="monthB" />
+              <select v-model.number="monthB">
+                <option v-for="m in 12" :key="m" :value="m">{{ monthLabel(m) }}</option>
+              </select>
             </div>
             <div class="field">
               <label>Año</label>
@@ -55,143 +106,131 @@
           <div class="pill">{{ bPill }}</div>
         </div>
       </div>
+
+      <!-- ENTREGAS -->
+      <section class="section">
+        <div class="sectionTitle">Entregas Mensuales</div>
+
+        <div class="grid4">
+          <KpiCard title="Entregadas" :left="aEntregas.entregadas" :right="bEntregas.entregadas" :leftLabel="aPill" :rightLabel="bPill" />
+          <KpiCard title="Destiempo" :left="aEntregas.destiempo" :right="bEntregas.destiempo" :leftLabel="aPill" :rightLabel="bPill" />
+          <KpiCard title="No entregó" :left="aEntregas.noentregadas" :right="bEntregas.noentregadas" :leftLabel="aPill" :rightLabel="bPill" />
+          <KpiCard title="Asignadas" :left="aEntregas.asignadas" :right="bEntregas.asignadas" :leftLabel="aPill" :rightLabel="bPill" />
+        </div>
+
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">Lista de Entregas — {{ aPill }}</div>
+            <EntregasDetalleTable :rows="aDetalleRows" />
+          </div>
+          <div class="panel">
+            <div class="panelTitle">Lista de Entregas — {{ bPill }}</div>
+            <EntregasDetalleTable :rows="bDetalleRows" />
+          </div>
+        </div>
+      </section>
+
+      <!-- PLANEACIONES -->
+      <section class="section">
+        <div class="sectionTitle">Planeaciones Revisadas</div>
+
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">{{ aPill }}</div>
+            <div v-if="aPlDs.pending.value" class="state-msg">Cargando…</div>
+            <div v-else-if="aPlError" class="state-msg err">Error: {{ aPlError }}</div>
+            <div v-else-if="aPlaneacionesRows.length === 0" class="state-msg">Sin datos / No aplica.</div>
+            
+            <div v-for="item in aPlaneacionesRows" :key="item.revisa" class="progressRow">
+              <div class="progressHead">
+                <div class="who">{{ item.revisa }}</div>
+                <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
+                <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(1) }}%</div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panelTitle">{{ bPill }}</div>
+            <div v-if="bPlDs.pending.value" class="state-msg">Cargando…</div>
+            <div v-else-if="bPlError" class="state-msg err">Error: {{ bPlError }}</div>
+            <div v-else-if="bPlaneacionesRows.length === 0" class="state-msg">Sin datos / No aplica.</div>
+            
+            <div v-for="item in bPlaneacionesRows" :key="item.revisa" class="progressRow">
+              <div class="progressHead">
+                <div class="who">{{ item.revisa }}</div>
+                <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
+                <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(1) }}%</div>
+              </div>
+              <div class="bar-track"><div class="bar-fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BITÁCORAS -->
+      <section class="section">
+        <div class="sectionTitle">Bitácoras (días hábiles)</div>
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">{{ aPill }}</div>
+            <BitacorasGrid :year="yearA" :month="monthA" :presentDays="aBitacorasDays" />
+          </div>
+          <div class="panel">
+            <div class="panelTitle">{{ bPill }}</div>
+            <BitacorasGrid :year="yearB" :month="monthB" :presentDays="bBitacorasDays" />
+          </div>
+        </div>
+      </section>
+
+      <!-- OBSERVACIONES GRUTA -->
+      <section class="section">
+        <div class="sectionTitle">Observaciones GRUTA</div>
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelTitle">{{ aPill }}</div>
+            <div class="htmlWrap" v-html="aObsChartHtml"></div>
+            <div class="obsText">{{ aObsText }}</div>
+          </div>
+          <div class="panel">
+            <div class="panelTitle">{{ bPill }}</div>
+            <div class="htmlWrap" v-html="bObsChartHtml"></div>
+            <div class="obsText">{{ bObsText }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SAPF -->
+      <section class="section">
+        <div class="sectionTitle">Atención a Padres (SAPF)</div>
+        <div class="grid1">
+          <CompareBarChart
+            title="SAPF (qty por depto)"
+            :leftName="aPill"
+            :rightName="bPill"
+            :categories="sapfCategories"
+            :leftSeries="sapfLeft"
+            :rightSeries="sapfRight"
+          />
+        </div>
+      </section>
+
+      <!-- ATTENDANCE -->
+      <section class="section">
+        <div class="sectionTitle">Seguimiento a Ausencias</div>
+        <div class="grid1">
+          <CompareBarChart
+            title="Ausencias (to_check + addressed)"
+            :leftName="aPill"
+            :rightName="bPill"
+            :categories="attendanceCategories"
+            :leftSeries="attendanceLeft"
+            :rightSeries="attendanceRight"
+          />
+        </div>
+      </section>
     </div>
-
-    <!-- ENTREGAS -->
-    <section class="section">
-      <div class="sectionTitle">Entregas Mensuales</div>
-
-      <div class="grid4">
-        <KpiCard title="Entregadas" :left="aEntregas.entregadas" :right="bEntregas.entregadas" :leftLabel="aPill" :rightLabel="bPill" />
-        <KpiCard title="Destiempo" :left="aEntregas.destiempo" :right="bEntregas.destiempo" :leftLabel="aPill" :rightLabel="bPill" />
-        <KpiCard title="No entregó" :left="aEntregas.noentregadas" :right="bEntregas.noentregadas" :leftLabel="aPill" :rightLabel="bPill" />
-        <KpiCard title="Asignadas" :left="aEntregas.asignadas" :right="bEntregas.asignadas" :leftLabel="aPill" :rightLabel="bPill" />
-      </div>
-
-      <div class="grid2">
-        <div class="panel">
-          <div class="panelTitle">Lista de Entregas — {{ aPill }}</div>
-          <EntregasDetalleTable :rows="aDetalleRows" />
-        </div>
-        <div class="panel">
-          <div class="panelTitle">Lista de Entregas — {{ bPill }}</div>
-          <EntregasDetalleTable :rows="bDetalleRows" />
-        </div>
-      </div>
-    </section>
-
-    <!-- PLANEACIONES -->
-    <section class="section">
-      <div class="sectionTitle">Planeaciones Revisadas</div>
-
-      <div class="grid2">
-        <div class="panel">
-          <div class="panelTitle">{{ aPill }}</div>
-
-          <div v-if="aPlDs.pending.value" class="empty">Cargando…</div>
-          <div v-else-if="aPlError" class="empty err">Error: {{ aPlError }}</div>
-          <div v-else-if="aPlaneacionesRows.length === 0" class="empty">
-            Sin datos / No aplica.
-          </div>
-
-          <div v-for="item in aPlaneacionesRows" :key="item.revisa" class="progressRow">
-            <div class="progressHead">
-              <div class="who">{{ item.revisa }}</div>
-              <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
-              <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(2) }}%</div>
-            </div>
-            <div class="bar"><div class="fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panelTitle">{{ bPill }}</div>
-
-          <div v-if="bPlDs.pending.value" class="empty">Cargando…</div>
-          <div v-else-if="bPlError" class="empty err">Error: {{ bPlError }}</div>
-          <div v-else-if="bPlaneacionesRows.length === 0" class="empty">
-            Sin datos / No aplica.
-          </div>
-
-          <div v-for="item in bPlaneacionesRows" :key="item.revisa" class="progressRow">
-            <div class="progressHead">
-              <div class="who">{{ item.revisa }}</div>
-              <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
-              <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(2) }}%</div>
-            </div>
-            <div class="bar"><div class="fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BITÁCORAS -->
-    <section class="section">
-      <div class="sectionTitle">Bitácoras (días hábiles)</div>
-
-      <div class="grid2">
-        <div class="panel">
-          <div class="panelTitle">{{ aPill }}</div>
-          <BitacorasGrid :year="yearA" :month="monthA" :presentDays="aBitacorasDays" />
-        </div>
-        <div class="panel">
-          <div class="panelTitle">{{ bPill }}</div>
-          <BitacorasGrid :year="yearB" :month="monthB" :presentDays="bBitacorasDays" />
-        </div>
-      </div>
-    </section>
-
-    <!-- OBSERVACIONES GRUTA -->
-    <section class="section">
-      <div class="sectionTitle">Observaciones GRUTA</div>
-
-      <div class="grid2">
-        <div class="panel">
-          <div class="panelTitle">{{ aPill }}</div>
-          <div class="htmlWrap" v-html="aObsChartHtml"></div>
-          <div class="obsText">{{ aObsText }}</div>
-        </div>
-        <div class="panel">
-          <div class="panelTitle">{{ bPill }}</div>
-          <div class="htmlWrap" v-html="bObsChartHtml"></div>
-          <div class="obsText">{{ bObsText }}</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SAPF -->
-    <section class="section">
-      <div class="sectionTitle">Atención a Padres (SAPF)</div>
-
-      <div class="grid1">
-        <CompareBarChart
-          title="SAPF (qty por depto)"
-          :leftName="aPill"
-          :rightName="bPill"
-          :categories="sapfCategories"
-          :leftSeries="sapfLeft"
-          :rightSeries="sapfRight"
-        />
-      </div>
-    </section>
-
-    <!-- ATTENDANCE -->
-    <section class="section">
-      <div class="sectionTitle">Seguimiento a Ausencias</div>
-
-      <div class="grid1">
-        <CompareBarChart
-          title="Ausencias (to_check + addressed por grupo)"
-          :leftName="aPill"
-          :rightName="bPill"
-          :categories="attendanceCategories"
-          :leftSeries="attendanceLeft"
-          :rightSeries="attendanceRight"
-        />
-      </div>
-    </section>
-
-    <!-- RUTA removed completely (NOT GRUTA) -->
   </div>
 </template>
 
@@ -200,13 +239,16 @@ import KpiCard from "~/components/KpiCard.vue";
 import EntregasDetalleTable from "~/components/EntregasDetalleTable.vue";
 import CompareBarChart from "~/components/CompareBarChart.vue";
 import BitacorasGrid from "~/components/BitacorasGrid.vue";
+import GlobalToDetailChart from "~/components/GlobalToDetailChart.vue"; // New Component
 
 import { PLANTELES, getPlantelByCode, mapAttendancePlantel } from "~/shared/planteles";
 import { monthLabelEs, clampMonth } from "~/utils/dates";
 
 const planteles = PLANTELES;
-
 const now = new Date();
+
+// View State
+const viewMode = ref<"compare" | "global">("compare");
 
 // Side A
 const plantelA = ref("PM");
@@ -223,6 +265,8 @@ const b = computed(() => getPlantelByCode(plantelB.value));
 
 const aLabel = computed(() => a.value?.label ?? "A");
 const bLabel = computed(() => b.value?.label ?? "B");
+
+const monthLabel = (m: number) => monthLabelEs(2000, m); // year doesn't matter for name
 
 const aMonthName = computed(() => monthLabelEs(yearA.value, monthA.value));
 const bMonthName = computed(() => monthLabelEs(yearB.value, monthB.value));
@@ -244,6 +288,12 @@ function planeaTotal(item: any) {
   const conteo = n(item?.conteo);
   return Math.max(total, conteo);
 }
+
+// -------------------- GLOBAL (New) --------------------
+// Uses 'entregas_global' which was present in server code but unused in UI
+const globalQuery = computed(() => ({ month: monthA.value, year: yearA.value }));
+const globalDs = useFetch<any>("/api/metrics/entregas_global", { query: globalQuery, watch: [globalQuery] });
+const globalRows = computed(() => globalDs.data.value?.rows ?? []);
 
 // -------------------- ENTREGAS (A/B) --------------------
 const aEntQuery = computed(() => ({ id: a.value?.id ?? 0, month: monthA.value, year: yearA.value }));
@@ -329,7 +379,7 @@ const sapfCategories = computed(() => {
   const set = new Set<string>();
   for (const r of ar) set.add(String(r.depto));
   for (const r of br) set.add(String(r.depto));
-  return Array.from(set);
+  return Array.from(set).sort();
 });
 
 const sapfLeft = computed(() => {
@@ -381,115 +431,168 @@ const attendanceRight = computed(() => {
 </script>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 18px; }
-.head { display: flex; flex-direction: column; gap: 14px; }
-.h1 { font-size: 22px; font-weight: 900; }
-.sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.page { display: flex; flex-direction: column; gap: 24px; animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+.h1 { font-size: 28px; font-weight: 800; margin: 0; color: var(--text); line-height: 1.1; }
+.sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+.view-toggles {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 4px;
+  border-radius: 12px;
+  display: flex;
+  box-shadow: var(--shadow);
+}
+.view-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.view-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* FILTERS */
 .filtersRow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
-@media (max-width: 1100px) { .filtersRow { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .filtersRow { grid-template-columns: 1fr; } }
 
 .filterCard {
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 12px;
-  background: rgba(255,255,255,0.02);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
 }
-.filterTitle { font-weight: 900; margin-bottom: 10px; }
-.grid { display: grid; grid-template-columns: 1fr 120px 140px; gap: 10px; }
-@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+.cardHeader { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.indicator { width: 10px; height: 10px; border-radius: 50%; }
+.indicator.a { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.indicator.b { background: #34d399; box-shadow: 0 0 8px #34d399; }
+
+.filterTitle { font-weight: 800; color: var(--text); font-size: 16px; }
+
+.grid { display: grid; grid-template-columns: 1fr 120px 100px; gap: 12px; }
+@media (max-width: 500px) { .grid { grid-template-columns: 1fr; } }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-label { font-size: 12px; color: var(--muted); }
+.control-bar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+.field-inline { display: flex; align-items: center; gap: 8px; }
+
+label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
 input, select {
-  background: rgba(255,255,255,0.03);
+  background: var(--input-bg);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 10px;
+  border-radius: 10px;
+  padding: 10px 12px;
   outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-input:focus, select:focus { border-color: rgba(96,165,250,0.55); }
+input:focus, select:focus { 
+  border-color: var(--accent); 
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); 
+}
+
+.mini-select, .mini-input { padding: 6px 10px; font-size: 14px; }
+.mini-input { width: 80px; }
 
 .pill {
-  margin-top: 10px;
-  display: inline-flex;
-  padding: 6px 10px;
-  border-radius: 999px;
+  margin-top: 14px;
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
   border: 1px solid var(--border);
-  background: rgba(0,0,0,0.14);
+  background: var(--bg);
   font-size: 12px;
-  color: #cbd5e1;
+  font-weight: 600;
+  color: var(--muted);
 }
 
+/* SECTIONS */
 .section {
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 14px;
-  background: rgba(255,255,255,0.02);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
 }
-.sectionTitle { font-weight: 900; margin-bottom: 12px; }
+.section:last-child { margin-bottom: 0; }
+.sectionTitle { 
+  font-weight: 800; 
+  font-size: 18px; 
+  margin-bottom: 16px; 
+  color: var(--text); 
+  border-left: 4px solid var(--accent);
+  padding-left: 10px;
+}
 
 .panel {
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 12px;
-  background: rgba(0,0,0,0.12);
+  padding: 16px;
 }
-.panelTitle { font-weight: 900; margin-bottom: 10px; }
+.panelTitle { 
+  font-weight: 700; 
+  margin-bottom: 12px; 
+  font-size: 14px; 
+  color: var(--text);
+  opacity: 0.9;
+}
 
-.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-.grid1 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+/* LAYOUTS */
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.grid1 { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
 
 @media (max-width: 1100px) { .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
 
-.empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
-.empty.err { color: rgba(248, 113, 113, 0.95); }
+/* STATES */
+.state-msg { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; font-style: italic; }
+.state-msg.err { color: #ef4444; }
 
-.progressRow { padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.07); }
+/* PROGRESS */
+.progressRow { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .progressRow:last-child { border-bottom: none; }
 
-.progressHead {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 10px;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-.who { font-weight: 800; }
-.nums { color: var(--muted); font-size: 12px; }
-.pct { font-weight: 900; font-size: 12px; }
+.progressHead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.who { font-weight: 700; font-size: 14px; color: var(--text); }
+.nums { font-size: 12px; color: var(--muted); margin-left: auto; margin-right: 8px; }
+.pct { font-weight: 800; font-size: 13px; color: var(--accent); }
 
-.bar {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.03);
+.bar-track {
+  width: 100%; height: 8px; border-radius: 4px;
+  background: var(--border);
   overflow: hidden;
 }
-.fill {
+.bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(96,165,250,0.85), rgba(34,197,94,0.75));
-  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), #34d399);
+  border-radius: 4px;
+  transition: width 0.6s ease-out;
 }
 
-.htmlWrap :deep(svg),
-.htmlWrap :deep(img),
-.htmlWrap :deep(canvas) {
-  max-width: 100%;
-  height: auto;
-}
-.obsText {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #cbd5e1;
-  white-space: pre-wrap;
-}
+/* HTML CONTENT */
+.htmlWrap { margin-bottom: 12px; border-radius: 8px; overflow: hidden; }
+.htmlWrap :deep(img), .htmlWrap :deep(svg) { max-width: 100%; height: auto; display: block; }
+.obsText { font-size: 14px; color: var(--text); white-space: pre-wrap; line-height: 1.5; opacity: 0.9; }
 </style>

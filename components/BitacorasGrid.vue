@@ -17,9 +17,9 @@
     </div>
 
     <div class="legend">
-      <span class="dot ok"></span><span>cumple</span>
-      <span class="dot miss"></span><span>no cumple</span>
-      <span class="dot future"></span><span>futuro</span>
+      <div class="lg-item"><span class="dot ok"></span> Cumple</div>
+      <div class="lg-item"><span class="dot miss"></span> No cumple</div>
+      <div class="lg-item"><span class="dot future"></span> Futuro</div>
     </div>
   </div>
 </template>
@@ -27,8 +27,8 @@
 <script setup lang="ts">
 const props = defineProps<{
   year: number;
-  month: number; // 1..12
-  presentDays: string[]; // ["YYYY-MM-DD", ...]
+  month: number; 
+  presentDays: string[]; 
 }>();
 
 function ymd(d: Date) {
@@ -42,18 +42,15 @@ const present = computed(() => new Set(props.presentDays.map(String)));
 
 const days = computed(() => {
   const out: { ymd: string; dd: string; present: boolean; future: boolean }[] = [];
-
   const start = new Date(props.year, props.month - 1, 1);
   const end = new Date(props.year, props.month, 0);
-
   const today = new Date();
   const todayYMD = ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
 
   for (let day = 1; day <= end.getDate(); day++) {
     const dt = new Date(props.year, props.month - 1, day);
-
-    const dow = dt.getDay(); // 0 Sun .. 6 Sat
-    if (dow === 0 || dow === 6) continue; // weekdays only, like legacy
+    const dow = dt.getDay(); 
+    if (dow === 0 || dow === 6) continue; 
 
     const key = ymd(dt);
     const isFuture = key > todayYMD;
@@ -65,53 +62,45 @@ const days = computed(() => {
       future: isFuture
     });
   }
-
   return out;
 });
 </script>
 
 <style scoped>
-.wrap { display: flex; flex-direction: column; gap: 12px; }
+.wrap { display: flex; flex-direction: column; gap: 16px; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 8px;
-}
-@media (max-width: 900px) {
-  .grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 6px;
 }
 
 .cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-weight: 900;
-  color: #0b1220;
+  height: 32px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  color: white;
   user-select: none;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
-.cell.ok { background: rgba(34,197,94,0.85); }
-.cell.miss { background: rgba(239,68,68,0.85); }
-.cell.future { background: rgba(148,163,184,0.45); color: #e2e8f0; }
+.cell.ok { background: #22c55e; border-color: #16a34a; }
+.cell.miss { background: #ef4444; border-color: #dc2626; }
+.cell.future { background: var(--bg); color: var(--muted); border-color: var(--border); box-shadow: none; }
 
 .legend {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  color: #cbd5e1;
-  font-size: 12px;
+  gap: 16px;
+  justify-content: center;
+  padding-top: 4px;
 }
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  display: inline-block;
-  border: 1px solid var(--border);
-}
-.dot.ok { background: rgba(34,197,94,0.85); }
-.dot.miss { background: rgba(239,68,68,0.85); }
-.dot.future { background: rgba(148,163,184,0.45); }
+.lg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.ok { background: #22c55e; }
+.dot.miss { background: #ef4444; }
+.dot.future { background: var(--border); }
 </style>

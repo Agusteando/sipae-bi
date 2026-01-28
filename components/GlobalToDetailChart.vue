@@ -1,14 +1,12 @@
 <template>
-  <div class="card">
+  <div class="g-chart-container">
     <div class="header">
-      <div class="title">{{ title }}</div>
-      <button class="btn" @click="toggleBack" :disabled="!selected">
-        {{ selected ? "Volver a Global" : "Global → Detalle (click)" }}
+      <div class="hint" v-if="!selected">
+        👆 Haz clic en una barra para ver el detalle de entregas.
+      </div>
+      <button class="btn-back" @click="toggleBack" :disabled="!selected">
+        {{ selected ? "← Volver al Global" : "Vista Global" }}
       </button>
-    </div>
-
-    <div class="hint" v-if="!selected">
-      Click en un plantel para morph a detalle.
     </div>
 
     <client-only>
@@ -18,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+import { useTheme } from "~/composables/useTheme";
 import VChart from "vue-echarts";
 
 type GlobalRow = { plantelCode: string; plantelLabel: string; entregadas: number; noentregadas: number; destiempo: number; asignadas: number };
@@ -28,23 +27,32 @@ const props = defineProps<{
 }>();
 
 const selected = ref<string | null>(null);
+const { chartTextColor, chartLineColor, chartGridColor } = useTheme();
 
 const option = computed(() => {
+  const common = {
+    tooltip: { 
+      trigger: "axis",
+      backgroundColor: chartTextColor.value === '#e5e7eb' ? '#1f2937' : '#ffffff',
+      textStyle: { color: chartTextColor.value === '#e5e7eb' ? '#fff' : '#000' }
+    },
+    grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: chartTextColor.value },
+      splitLine: { lineStyle: { color: chartGridColor.value } },
+      axisLine: { lineStyle: { color: chartLineColor.value } }
+    },
+  };
+
   if (!selected.value) {
     return {
-      tooltip: { trigger: "axis" },
-      grid: { left: 28, right: 18, top: 20, bottom: 52, containLabel: true },
+      ...common,
       xAxis: {
         type: "category",
         data: props.rows.map(r => r.plantelLabel),
-        axisLabel: { color: "#9ca3af", interval: 0, rotate: 25 },
-        axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
-      },
-      yAxis: {
-        type: "value",
-        axisLabel: { color: "#9ca3af" },
-        splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
-        axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+        axisLabel: { color: chartTextColor.value, interval: 0, rotate: 25, fontSize: 11 },
+        axisLine: { lineStyle: { color: chartLineColor.value } }
       },
       series: [
         {
@@ -53,8 +61,10 @@ const option = computed(() => {
           data: props.rows.map(r => ({
             name: r.plantelLabel,
             value: r.entregadas,
-            _code: r.plantelCode
-          }))
+            _code: r.plantelCode,
+            itemStyle: { color: '#3b82f6' }
+          })),
+          label: { show: true, position: 'top', color: chartTextColor.value, formatter: '{c}' }
         }
       ]
     };
@@ -63,33 +73,27 @@ const option = computed(() => {
   const r = props.rows.find(x => x.plantelCode === selected.value);
   const detail = r
     ? [
-        { name: "Entregadas", value: r.entregadas },
-        { name: "Destiempo", value: r.destiempo },
-        { name: "No entregó", value: r.noentregadas },
-        { name: "Asignadas", value: r.asignadas }
+        { name: "Entregadas", value: r.entregadas, itemStyle: { color: '#22c55e' } },
+        { name: "Destiempo", value: r.destiempo, itemStyle: { color: '#eab308' } },
+        { name: "No entregó", value: r.noentregadas, itemStyle: { color: '#ef4444' } },
+        { name: "Asignadas", value: r.asignadas, itemStyle: { color: '#6366f1' } }
       ]
     : [];
 
   return {
-    tooltip: { trigger: "axis" },
-    grid: { left: 28, right: 18, top: 20, bottom: 40, containLabel: true },
+    ...common,
     xAxis: {
       type: "category",
       data: detail.map(d => d.name),
-      axisLabel: { color: "#9ca3af" },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
-    },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: "#9ca3af" },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
-      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+      axisLabel: { color: chartTextColor.value, fontSize: 12, fontWeight: 'bold' },
+      axisLine: { lineStyle: { color: chartLineColor.value } }
     },
     series: [
       {
         type: "bar",
         universalTransition: true,
-        data: detail
+        data: detail,
+        label: { show: true, position: 'top', color: chartTextColor.value }
       }
     ]
   };
@@ -109,24 +113,29 @@ function toggleBack() {
 </script>
 
 <style scoped>
-.card {
+.g-chart-container {
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(255,255,255,0.02);
-}
-.header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.title { font-weight: 900; }
-.hint { margin: 6px 0 10px; color: var(--muted); font-size: 12px; }
-.chart { width: 100%; height: 380px; }
-.btn {
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.03);
-  color: var(--text);
-  padding: 8px 10px;
   border-radius: 12px;
-  cursor: pointer;
+  padding: 16px;
 }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn:hover:not(:disabled) { border-color: rgba(96,165,250,0.55); }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; height: 32px; }
+.hint { color: var(--accent); font-size: 13px; font-weight: 600; animation: bounce 2s infinite; }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+.btn-back {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.btn-back:disabled { opacity: 0; pointer-events: none; }
+.btn-back:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+.chart { width: 100%; height: 400px; }
 </style>

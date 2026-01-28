@@ -1,10 +1,23 @@
 {
   "page": "kardex",
-  "filters": ["plantelA", "plantelB", "month", "year"],
-  "sections": [
-    { "id": "entregas", "title": "Entregas Mensuales", "metrics": ["entregas", "entregas_detalle"] },
-    { "id": "attendance", "title": "Seguimiento a Ausencias", "metrics": ["attendance"] },
-    { "id": "ruta", "title": "Ruta", "metrics": ["ruta"] },
-    { "id": "global", "title": "Global", "metrics": ["entregas_global"] }
-  ]
+  "title": "Dashboard Kardex",
+  "views": {
+    "compare": {
+      "label": "Comparativo (A/B)",
+      "filters": ["plantelA", "plantelB", "month", "year"],
+      "sections": [
+        { "id": "entregas", "title": "Entregas Mensuales", "type": "kpi_grid", "metrics": ["entregas", "entregas_detalle"] },
+        { "id": "planeaciones", "title": "Planeaciones", "type": "progress_list", "metrics": ["planeaciones"] },
+        { "id": "attendance", "title": "Seguimiento a Ausencias", "type": "bar_chart", "metrics": ["attendance"] },
+        { "id": "sapf", "title": "SAPF", "type": "bar_chart", "metrics": ["sapf"] }
+      ]
+    },
+    "global": {
+      "label": "Vista Global",
+      "filters": ["month", "year"],
+      "sections": [
+        { "id": "global_entregas", "title": "Panorama Global", "type": "drill_down_chart", "metrics": ["entregas_global"] }
+      ]
+    }
+  }
 }
