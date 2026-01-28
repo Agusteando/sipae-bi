@@ -1,0 +1,10 @@
+{
+  "page": "kardex",
+  "filters": ["plantelA", "plantelB", "month", "year"],
+  "sections": [
+    { "id": "entregas", "title": "Entregas Mensuales", "metrics": ["entregas", "entregas_detalle"] },
+    { "id": "attendance", "title": "Seguimiento a Ausencias", "metrics": ["attendance"] },
+    { "id": "ruta", "title": "Ruta", "metrics": ["ruta"] },
+    { "id": "global", "title": "Global", "metrics": ["entregas_global"] }
+  ]
+}

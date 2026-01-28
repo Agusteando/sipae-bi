@@ -1,0 +1,15 @@
+{
+  "entities": {
+    "plantel": { "key": "plantel" },
+    "teacher": { "key": "teacher" }
+  },
+  "links": [
+    {
+      "fromMetric": "ruta",
+      "fromKey": "observatorName",
+      "toMetric": "ruta",
+      "toKey": "observatorName",
+      "entity": "teacher"
+    }
+  ]
+}
