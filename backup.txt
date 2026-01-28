@@ -1,0 +1,2521 @@
+## app.vue
+
+<template>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">BI Dashboard</div>
+      <nav class="nav">
+        <NuxtLink to="/kardex" class="link">Kardex</NuxtLink>
+      </nav>
+    </header>
+
+    <main class="main">
+      <NuxtPage />
+    </main>
+  </div>
+</template>
+
+<style>
+:root {
+  --bg: #0b1220;
+  --panel: #121b2e;
+  --panel2: #0f172a;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: rgba(255,255,255,0.08);
+  --accent: #60a5fa;
+}
+
+html, body, #__nuxt { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(1200px 600px at 20% 10%, rgba(96,165,250,0.18), transparent 50%),
+              radial-gradient(900px 500px at 80% 20%, rgba(34,197,94,0.12), transparent 55%),
+              var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.app { min-height: 100%; display: flex; flex-direction: column; }
+.topbar {
+  position: sticky; top: 0;
+  background: rgba(11,18,32,0.75);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+}
+.brand { font-weight: 800; letter-spacing: 0.4px; }
+.nav .link {
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
+.nav .link:hover { border-color: rgba(96,165,250,0.55); }
+
+.main { padding: 18px; max-width: 1400px; width: 100%; margin: 0 auto; }
+</style>
+
+## nuxt.config.ts
+
+export default defineNuxtConfig({
+  /**
+   * This is the switch that decides where Nuxt looks for `app.vue`, `pages/`, etc.
+   * If your project ended up with a different srcDir, Nuxt will ignore root `app.vue`.
+   * For your setup, force Nuxt to use the repository root.
+   */
+  srcDir: ".",
+
+  /**
+   * Be explicit about directory locations to avoid Nuxt resolving to `src/` or `app/`
+   * depending on template / prior config.
+   */
+  dir: {
+    pages: "pages",
+    layouts: "layouts",
+    middleware: "middleware",
+    plugins: "plugins",
+    assets: "assets",
+    public: "public",
+  },
+
+  ssr: true,
+
+  typescript: {
+    strict: true,
+    shim: false,
+  },
+
+  runtimeConfig: {
+    dbHost: process.env.DB_HOST,
+    dbUser: process.env.DB_USER,
+    dbPassword: process.env.DB_PASSWORD,
+    dbName: process.env.DB_NAME,
+    botBaseUrl: process.env.BOT_BASE_URL || "https://bot.casitaapps.com",
+  },
+});
+
+## package.json
+
+{
+  "name": "bi-dashboard",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "echarts": "^6.0.0",
+    "jiti": "^2.6.1",
+    "mysql2": "^3.16.2",
+    "nuxt": "^4.3.0",
+    "papaparse": "^5.5.3",
+    "vue": "^3.5.27",
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2"
+  }
+}
+
+## README.md
+
+# Nuxt Minimal Starter
+
+Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+
+## Setup
+
+Make sure to install dependencies:
+
+```bash
+# npm
+npm install
+
+# pnpm
+pnpm install
+
+# yarn
+yarn install
+
+# bun
+bun install
+```
+
+## Development Server
+
+Start the development server on `http://localhost:3000`:
+
+```bash
+# npm
+npm run dev
+
+# pnpm
+pnpm dev
+
+# yarn
+yarn dev
+
+# bun
+bun run dev
+```
+
+## Production
+
+Build the application for production:
+
+```bash
+# npm
+npm run build
+
+# pnpm
+pnpm build
+
+# yarn
+yarn build
+
+# bun
+bun run build
+```
+
+Locally preview production build:
+
+```bash
+# npm
+npm run preview
+
+# pnpm
+pnpm preview
+
+# yarn
+yarn preview
+
+# bun
+bun run preview
+```
+
+Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## tsconfig.json
+
+{
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "files": [],
+  "references": [
+    {
+      "path": "./.nuxt/tsconfig.app.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.server.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.shared.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.node.json"
+    }
+  ]
+}
+
+## utils/dates.ts
+
+export function monthLabelEs(year: number, month1to12: number) {
+  const dt = new Date(year, month1to12 - 1, 1);
+  return new Intl.DateTimeFormat("es-MX", { month: "long" }).format(dt);
+}
+
+export function clampMonth(m: number) {
+  if (!Number.isFinite(m)) return 1;
+  return Math.min(12, Math.max(1, Math.trunc(m)));
+}
+
+## utils/statusColor.ts
+
+export function getStatusColor(item: {
+  status: number | string;
+  returned: number | null;
+  destiempo: number | null;
+  deadline: string;
+}) {
+  const status = String(item.status);
+  const returned = Number(item.returned) === 1;
+  const destiempo = Number(item.destiempo) === 1;
+
+  const currentDate = new Date();
+  const deadlineDate = new Date(item.deadline);
+
+  if (status === "1" && !returned) return "#28a745";
+  if (destiempo && !returned) return "#ffc107";
+  if (status === "0" && currentDate > deadlineDate) return "#dc3545";
+  if (returned) return "#fd7e14";
+  if (currentDate <= deadlineDate && status === "0") return "#007bff";
+  return "#6c757d";
+}
+
+## shared/planteles.ts
+
+export type Plantel = {
+  code: string;
+  id: number; // used by detalle.dir_id for entregas & lista detalle
+  label: string;
+  campus?: string;
+  nivel?: string;
+  asistencia?: string; // used by attendance
+  coords?: string[];
+  gral?: boolean;
+};
+
+export const PLANTELES: Plantel[] = [
+  { code: "PM", id: 8, label: "Primaria Metepec", campus: "Metepec", nivel: "Primaria", asistencia: "PM", coords: ["CLAUDIA MARINA","ANA LAURA","GUILLERMO","JORGE MICHAEL","TANIA IRAIS"] },
+  { code: "PT", id: 9, label: "Primaria Toluca", campus: "Toluca", nivel: "Primaria", asistencia: "PT", coords: ["CARLOS IVAN","Verónica Elsa","IEDIS TOLUCA"] },
+  { code: "SM", id: 10, label: "Secundaria Metepec", campus: "Metepec", nivel: "Secundaria", asistencia: "SM", coords: ["Iván Sebastián","JAZMIN DEL CARMEN","CRISTHIAN ALFONSO","Alejandra"] },
+  { code: "ST", id: 11, label: "Secundaria Toluca", campus: "Toluca", nivel: "Secundaria", asistencia: "ST", coords: ["LEONARDO JUAN","CASANDRA ODETTE","MARCO IVAN"] },
+  { code: "CT", id: 5, label: "Guardería IMSS Toluca", campus: "Toluca", asistencia: "CT" },
+  { code: "CM", id: 1, label: "Guardería IMSS Metepec", campus: "Metepec", asistencia: "CM" },
+  { code: "DM", id: 12, label: "Guardería IEDIS Metepec", campus: "Metepec", asistencia: "DM" },
+  { code: "PREES TOL", id: 7, label: "Preescolar Toluca", campus: "Toluca", nivel: "Preescolar", asistencia: "PREES TOL", coords: ["LAURA ISABEL","ERIKA","BRENDA ADRIANA","Gabriela Monserrath"] },
+  { code: "ISSSTE TOL", id: 6, label: "Guardería ISSSTE Toluca", campus: "Toluca", nivel: "Preescolar", asistencia: "ISSSTE TOLUCA", coords: ["MARIBEL"] },
+  { code: "PREES MET", id: 3, label: "Preescolar Metepec", campus: "Metepec", nivel: "Preescolar", asistencia: "PREES MET", coords: ["MARCELA MADAI","JUDITH VIRIDIANA","ADRIANA JOSEFINA"] },
+  { code: "ISSSTE MET", id: 2, label: "Preescolar ISSSTE Metepec", campus: "Metepec", nivel: "Preescolar", asistencia: "ISSSTE METEPEC" },
+
+  { code: "dh", id: 13, label: "Desarrollo Humano", campus: "Metepec", gral: true },
+  { code: "artes", id: 23, label: "Artes", campus: "Metepec", gral: true },
+  { code: "deportes", id: 15, label: "Deportes", campus: "Metepec", gral: true },
+  { code: "mkt", id: 14, label: "Mercadotecnia", campus: "Metepec", gral: true }
+];
+
+export function getPlantelByCode(code: string) {
+  return PLANTELES.find(p => p.code === code) || null;
+}
+
+export function getPlantelById(id: number) {
+  return PLANTELES.find(p => p.id === id) || null;
+}
+
+/**
+ * Matches your legacy remap:
+ * if asistencia is PREES MET => plantel for attendance is CM
+ * if asistencia is PREES TOL => plantel for attendance is CT
+ */
+export function mapAttendancePlantel(codeOrAsistencia: string): string {
+  if (codeOrAsistencia === "PREES MET") return "CM";
+  if (codeOrAsistencia === "PREES TOL") return "CT";
+  return codeOrAsistencia;
+}
+
+## server/metrics/attendance.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [
+    { key: "grado", label: "Grado" },
+    { key: "grupo", label: "Grupo" }
+  ],
+  measures: [
+    { key: "to_check", label: "Por revisar", format: "int" },
+    { key: "addressed", label: "Atendidas", format: "int" }
+  ]
+};
+
+export default <MetricDefinition>{
+  id: "attendance",
+  label: "Seguimiento a Ausencias",
+  params: [
+    { key: "plantel", type: "string", required: true },
+    { key: "mes", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const plantel = String(params.plantel);
+    const mes = Number(params.mes);
+    const year = Number(params.year);
+
+    const sql = `
+      SELECT
+        grado, grupo,
+        SUM(CASE WHEN attendance = '0' AND motivo IS NULL THEN 1 ELSE 0 END) AS to_check,
+        SUM(CASE WHEN attendance = '0' AND motivo IS NOT NULL THEN 1 ELSE 0 END) AS addressed
+      FROM asistencia
+      WHERE MONTH(fecha) = ?
+        AND YEAR(fecha) = ?
+        AND plantel = ?
+      GROUP BY grado, grupo
+      ORDER BY FIELD(grado, 'primero','segundo','tercero','cuarto','quinto','sexto'), grupo
+    `;
+
+    const [rows] = await mysql.query<any[]>(sql, [mes, year, plantel]);
+
+    return {
+      metricId: "attendance",
+      label: "Seguimiento a Ausencias",
+      params: { plantel, mes, year },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/entregas.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [],
+  measures: [
+    { key: "asignadas", label: "Asignadas", format: "int" },
+    { key: "destiempo", label: "Destiempo", format: "int" },
+    { key: "entregadas", label: "Entregadas", format: "int" },
+    { key: "noentregadas", label: "No entregó", format: "int" },
+    { key: "pendientes", label: "Pendientes", format: "int" }
+  ]
+};
+
+export default <MetricDefinition>{
+  id: "entregas",
+  label: "Entregas Mensuales",
+  params: [
+    { key: "id", type: "number", required: true },
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const id = Number(params.id);
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    const sql = `
+      SELECT
+        A.asignadas,
+        A.destiempo,
+        A.entregadas,
+        A.noentregadas,
+        (A.asignadas - A.entregadas - A.noentregadas) AS pendientes
+      FROM (
+        SELECT
+          COUNT(id) AS asignadas,
+          SUM(IF(destiempo=1,1,0)) AS destiempo,
+          SUM(IF(status=1,1,0)) AS entregadas,
+          SUM(CASE WHEN deadline < NOW() AND status = 0 THEN 1 ELSE 0 END) AS noentregadas
+        FROM detalle
+        WHERE dir_id = ?
+          AND MONTH(deadline) = ?
+          AND YEAR(deadline) = ?
+      ) A
+    `;
+
+    const [rows] = await mysql.query<any[]>(sql, [id, month, year]);
+
+    return {
+      metricId: "entregas",
+      label: "Entregas Mensuales",
+      params: { id, month, year },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/entregas_detalle.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "title", label: "Título" }],
+  measures: []
+};
+
+export default <MetricDefinition>{
+  id: "entregas_detalle",
+  label: "Lista de Entregas",
+  params: [
+    { key: "plantel", type: "number", required: true }, // dir_id
+    { key: "mes", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const plantel = Number(params.plantel);
+    const mes = Number(params.mes);
+    const year = Number(params.year);
+
+    const sql = `
+      SELECT title, status, deadline, returned, destiempo
+      FROM detalle
+      WHERE MONTH(deadline) = ?
+        AND YEAR(deadline) = ?
+        AND dir_id = ?
+      ORDER BY deadline ASC, title ASC
+    `;
+
+    const [rows] = await mysql.query<any[]>(sql, [mes, year, plantel]);
+
+    return {
+      metricId: "entregas_detalle",
+      label: "Lista de Entregas",
+      params: { plantel, mes, year },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/entregas_global.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+import { getPlantelById } from "../../shared/planteles";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "plantelCode" }, { key: "plantelLabel" }],
+  measures: [
+    { key: "asignadas", format: "int" },
+    { key: "destiempo", format: "int" },
+    { key: "entregadas", format: "int" },
+    { key: "noentregadas", format: "int" }
+  ]
+};
+
+export default <MetricDefinition>{
+  id: "entregas_global",
+  label: "Entregas Global",
+  params: [
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    const sql = `
+      SELECT
+        dir_id,
+        COUNT(id) AS asignadas,
+        SUM(IF(destiempo=1,1,0)) AS destiempo,
+        SUM(IF(status=1,1,0)) AS entregadas,
+        SUM(CASE WHEN deadline < NOW() AND status = 0 THEN 1 ELSE 0 END) AS noentregadas
+      FROM detalle
+      WHERE month(deadline) = ? AND year(deadline) = ?
+      GROUP BY dir_id
+      ORDER BY entregadas DESC
+    `;
+
+    const [rows] = await mysql.query<any[]>(sql, [month, year]);
+
+    const normalized = rows.map(r => {
+      const p = getPlantelById(Number(r.dir_id));
+      return {
+        plantelCode: p?.code ?? `ID:${r.dir_id}`,
+        plantelLabel: p?.label ?? `dir_id ${r.dir_id}`,
+        asignadas: Number(r.asignadas ?? 0),
+        destiempo: Number(r.destiempo ?? 0),
+        entregadas: Number(r.entregadas ?? 0),
+        noentregadas: Number(r.noentregadas ?? 0)
+      };
+    });
+
+    return {
+      metricId: "entregas_global",
+      label: "Entregas Global",
+      params: { month, year },
+      schema,
+      rows: normalized,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/observaciones.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [],
+  measures: []
+};
+
+async function postJson(url: string, body: any): Promise<string> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Observaciones fetch failed: ${url} -> ${res.status}`);
+  return await res.text();
+}
+
+export default <MetricDefinition>{
+  id: "observaciones",
+  label: "Observaciones GRUTA",
+  params: [
+    { key: "campus", type: "string", required: true },
+    { key: "nivel", type: "string", required: true },
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params }) {
+    const campus = String(params.campus);
+    const nivel = String(params.nivel);
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    const payload = { campus, nivel, month, year };
+
+    const chartHtml = await postJson("https://bot.casitaapps.com/observaciones-chart", payload);
+    const text = await postJson("https://bot.casitaapps.com/observaciones-text", payload);
+
+    return {
+      metricId: "observaciones",
+      label: "Observaciones GRUTA",
+      params: { campus, nivel, month, year },
+      schema,
+      rows: [{ chartHtml, text }],
+      meta: { generatedAt: new Date().toISOString(), source: "bot.casitaapps.com" }
+    };
+  }
+};
+
+## server/metrics/planeaciones.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "revisa", label: "Revisa" }],
+  measures: [
+    { key: "conteo", label: "Revisadas", format: "int" },
+    { key: "total", label: "Subidas", format: "int" },
+    { key: "porcen", label: "%", format: "pct" }
+  ]
+};
+
+function computeSchoolTerm(mes: number, year: number) {
+  // Aug-Dec -> year-year+1 ; Jan-Jul -> (year-1)-year
+  const startYear = mes >= 8 ? year : year - 1;
+  return `${startYear}-${startYear + 1}`;
+}
+
+function splitPlantelLabel(label: string) {
+  const words = String(label || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const nivel = words[0] ?? "Unknown";
+  const campus = words[1] ?? "Unknown";
+  return { nivel, campus };
+}
+
+async function detectWeekStartColumn(mysql: any): Promise<string> {
+  // Robust: supports schemas that use weekStart / week_start / weekstart
+  const candidates = ["weekStart", "week_start", "weekstart"];
+  const [rows] = await mysql.query<any[]>(
+    `
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'planeaciones'
+      AND COLUMN_NAME IN (${candidates.map(() => "?").join(",")})
+    LIMIT 10
+  `,
+    candidates
+  );
+
+  const present = new Set((rows ?? []).map((r: any) => String(r.COLUMN_NAME)));
+  for (const c of candidates) {
+    if (present.has(c)) return c;
+  }
+  throw new Error(
+    `planeaciones metric: could not find weekStart column in table planeaciones. Tried: ${candidates.join(", ")}`
+  );
+}
+
+export default <MetricDefinition>{
+  id: "planeaciones",
+  label: "Planeaciones Revisadas",
+  params: [
+    { key: "plantel", type: "string", required: true }, // e.g. "Primaria Metepec"
+    { key: "mes", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const plantel = String(params.plantel);
+    const mes = Number(params.mes);
+    const year = Number(params.year);
+
+    const { nivel, campus } = splitPlantelLabel(plantel);
+    const schoolTerm = computeSchoolTerm(mes, year);
+
+    // legacy behavior: exclude future days of month
+    const weekCol = await detectWeekStartColumn(mysql); // e.g. "weekStart"
+    const A_WEEK = `A.\`${weekCol}\``;
+    const R_WEEK = `R.\`${weekCol}\``;
+    const WEEK = `\`${weekCol}\``;
+
+    const curdateFilterA = `AND DATE(${A_WEEK}) < CURDATE()`;
+    const curdateFilterR = `AND DATE(${R_WEEK}) < CURDATE()`;
+    const curdateFilterNoAlias = `AND DATE(${WEEK}) < CURDATE()`;
+
+    const sql = `
+SELECT *
+FROM (
+    SELECT
+        IF(O.username = 'coord.ingles.pm@casitaiedis.edu.mx', 'Ana Laura', O.username) AS revisa,
+        Q.total3 AS test,
+        O.plantel,
+        O.plantelid,
+        O.plantelid2,
+        M.conteo AS conteo,
+        IFNULL(Q.total3, IFNULL(P.total2, N.total)) AS total,
+        P.total2,
+        (SUM(M.conteo) * 100 / IFNULL(Q.total3, IFNULL(P.total2, N.total))) AS porcen
+    FROM (
+        SELECT
+            username,
+            CONCAT(nivel, ' ', campus, ' ', area) AS plantel,
+            CONCAT(nivel, ' ', campus) AS plantelid,
+            CONCAT(nivel, ' ', campus2) AS plantelid2,
+            CONCAT(IFNULL(area, ''), IFNULL(area2, ''), IFNULL(area3, ''), IFNULL(area4, '')) AS multiarea,
+            campus,
+            LOWER(area) AS area,
+            LOWER(nivel) AS nivel
+        FROM usuarios
+        WHERE coordinador = '1' AND NOT gral = '1'
+    ) O
+    LEFT JOIN (
+        SELECT
+            H.username AS revisa,
+            X.plantel,
+            X.area,
+            X.nivel,
+            X.campus,
+            (IFNULL(X.conten, 0) + IFNULL(Z.conten, 0) + IFNULL(Y.conten, 0)) AS conteo
+        FROM (
+            SELECT username, area FROM usuarios WHERE coordinador = '1'
+        ) H
+        LEFT JOIN (
+            SELECT
+                A.revisa,
+                COUNT(DISTINCT A.parentid) AS conten,
+                CONCAT(A.nivel, ' ', A.campus, ' ', A.area) AS plantel,
+                A.nivel,
+                A.campus,
+                A.area
+            FROM planeaciones A
+            LEFT JOIN usuarios B ON A.revisa = B.username
+            WHERE MONTH(${A_WEEK}) = ? ${curdateFilterA}
+              AND A.ciclo = ?
+              AND A.revisa IS NOT NULL
+            GROUP BY A.revisa, A.nivel, A.campus
+        ) X ON H.username = X.revisa
+        LEFT JOIN (
+            SELECT
+                A.revisa2 AS revisa,
+                COUNT(DISTINCT A.parentid) AS conten
+            FROM planeaciones A
+            LEFT JOIN usuarios B ON A.revisa2 = B.username
+            WHERE B.username IS NOT NULL
+              AND MONTH(${A_WEEK}) = ? ${curdateFilterA}
+              AND A.ciclo = ?
+            GROUP BY A.revisa2
+        ) Y ON H.username = Y.revisa
+        LEFT JOIN (
+            SELECT
+                A.revisa3 AS revisa,
+                A.nivel,
+                A.area,
+                COUNT(DISTINCT A.parentid) AS conten
+            FROM planeaciones A
+            LEFT JOIN usuarios B ON A.revisa3 = B.username
+            WHERE B.username IS NOT NULL
+              AND MONTH(${A_WEEK}) = ? ${curdateFilterA}
+              AND A.ciclo = ?
+            GROUP BY A.revisa3
+        ) Z ON H.username = Z.revisa
+        WHERE plantel IS NOT NULL
+        GROUP BY plantel, revisa, nivel, area
+    ) M
+      ON O.username = M.revisa
+     AND LOWER(TRIM(M.nivel))  = LOWER(TRIM(?))
+     AND LOWER(TRIM(M.campus)) = LOWER(TRIM(?))
+    LEFT JOIN (
+        SELECT
+            T.boss AS boss,
+            R.nivel,
+            R.campus,
+            COUNT(DISTINCT R.parentid) AS total
+        FROM planeaciones R
+        LEFT JOIN usuarios T ON R.docente = T.username
+        WHERE MONTH(${R_WEEK}) = ? ${curdateFilterR}
+          AND R.ciclo = ?
+        GROUP BY T.boss, R.campus, R.nivel
+    ) N
+      ON O.username = N.boss
+     AND LOWER(TRIM(?)) = LOWER(TRIM(N.nivel))
+     AND LOWER(TRIM(?)) = LOWER(TRIM(N.campus))
+    LEFT JOIN (
+        SELECT
+            area,
+            COUNT(DISTINCT parentid) AS total2
+        FROM planeaciones
+        WHERE area IN ('deportes', 'artes', 'habilidades socioemocionales')
+          AND MONTH(${WEEK}) = ? ${curdateFilterNoAlias}
+          AND ciclo = ?
+        GROUP BY area, campus, nivel
+    ) P
+      ON O.multiarea LIKE CONCAT('%', P.area, '%')
+     AND LOWER(TRIM(?)) = LOWER(TRIM(N.nivel))
+     AND LOWER(TRIM(?)) = LOWER(TRIM(N.campus))
+    LEFT JOIN (
+        SELECT
+            nivel,
+            campus,
+            area,
+            COUNT(DISTINCT parentid) AS total3
+        FROM planeaciones
+        WHERE LOWER(nivel) = 'preescolar'
+          AND area LIKE '%ing%'
+          AND MONTH(${WEEK}) = ? ${curdateFilterNoAlias}
+          AND ciclo = ?
+          AND campus = ?
+        GROUP BY nivel, campus, area
+    ) Q
+      ON O.nivel = Q.nivel
+     AND Q.area LIKE CONCAT('%', O.area, '%')
+     AND O.campus = Q.campus
+    WHERE M.conteo > 0
+    GROUP BY O.username
+) A
+WHERE LOWER(TRIM(A.plantelid))  = LOWER(TRIM(?))
+   OR LOWER(TRIM(A.plantelid2)) = LOWER(TRIM(?))
+GROUP BY A.revisa
+`;
+
+    const bind = [
+      mes, schoolTerm, // X
+      mes, schoolTerm, // Y
+      mes, schoolTerm, // Z
+      nivel, campus,   // M join
+      mes, schoolTerm, // N
+      nivel, campus,   // N join
+      mes, schoolTerm, // P
+      nivel, campus,   // P join
+      mes, schoolTerm, campus, // Q
+      plantel, plantel // outer
+    ];
+
+    const [rows] = await mysql.query<any[]>(sql, bind);
+
+    return {
+      metricId: "planeaciones",
+      label: "Planeaciones Revisadas",
+      params: { plantel, mes, year, schoolTerm, weekCol },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/ruta.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "observatorName", label: "Observador" }],
+  measures: [{ key: "quantity", label: "Cantidad", format: "int" }]
+};
+
+export default <MetricDefinition>{
+  id: "ruta",
+  label: "Ruta (conteo por observador)",
+  params: [
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    // SQL equivalent of your PHP de-dupe + group-by:
+    // DISTINCT across the same fields used in duplicate check, then COUNT per observatorName.
+    const sql = `
+      SELECT
+        t.observatorName,
+        COUNT(*) AS quantity
+      FROM (
+        SELECT DISTINCT
+          year, month, day, final_observations, school_id, observatorName, professor_fullname
+        FROM daily_ruta
+        WHERE month = ?
+          AND year = ?
+      ) t
+      GROUP BY t.observatorName
+      ORDER BY quantity DESC, t.observatorName ASC
+    `;
+
+    const [rows] = await mysql.query<any[]>(sql, [month, year]);
+
+    return {
+      metricId: "ruta",
+      label: "Ruta (conteo por observador)",
+      params: { month, year },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/sapf.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "depto", label: "Departamento" }],
+  measures: [{ key: "qty", label: "Cantidad", format: "int" }]
+};
+
+async function fetchCampus(mysql: any, mapCampus: string, dataCampus: string, start: string, end: string) {
+  const sql = `
+    SELECT
+      t.department_name AS depto,
+      CAST(SUM(COALESCE(t.fichas_qty, 0) + COALESCE(t.seguimiento_qty, 0)) AS UNSIGNED) AS qty
+    FROM (
+      SELECT
+        COALESCE(dm.department_name, src.email) AS department_name,
+        f.fichas_qty,
+        s.seguimiento_qty
+      FROM (
+        SELECT d.email
+        FROM deptos_map d
+        WHERE d.campus = ?
+
+        UNION
+
+        SELECT DISTINCT fa.department_email AS email
+        FROM fichas_atencion fa
+        WHERE fa.school_code = ?
+          AND fa.fecha >= ? AND fa.fecha < ?
+          AND fa.department_email IS NOT NULL AND fa.department_email <> ''
+
+        UNION
+
+        SELECT DISTINCT se.department_email AS email
+        FROM seguimiento se
+        WHERE se.school_code = ?
+          AND se.fecha >= ? AND se.fecha < ?
+          AND se.department_email IS NOT NULL AND se.department_email <> ''
+      ) src
+      LEFT JOIN deptos_map dm
+        ON dm.email = src.email AND dm.campus = ?
+      LEFT JOIN (
+        SELECT
+          fa.department_email AS email,
+          COUNT(*) AS fichas_qty
+        FROM fichas_atencion fa
+        WHERE fa.school_code = ?
+          AND fa.fecha >= ? AND fa.fecha < ?
+          AND fa.department_email IS NOT NULL AND fa.department_email <> ''
+        GROUP BY fa.department_email
+      ) f ON f.email = src.email
+      LEFT JOIN (
+        SELECT
+          se.department_email AS email,
+          COUNT(*) AS seguimiento_qty
+        FROM seguimiento se
+        WHERE se.school_code = ?
+          AND se.fecha >= ? AND se.fecha < ?
+          AND se.department_email IS NOT NULL AND se.department_email <> ''
+        GROUP BY se.department_email
+      ) s ON s.email = src.email
+    ) t
+    GROUP BY t.department_name
+    ORDER BY qty DESC, t.department_name ASC
+  `;
+
+  const bind = [
+    mapCampus,
+    dataCampus, start, end,
+    dataCampus, start, end,
+    mapCampus,
+    dataCampus, start, end,
+    dataCampus, start, end
+  ];
+
+  const [rows] = await mysql.query<any[]>(sql, bind);
+  return rows.map(r => ({ depto: String(r.depto), qty: Number(r.qty ?? 0) }));
+}
+
+export default <MetricDefinition>{
+  id: "sapf",
+  label: "Atención a Padres (SAPF)",
+  params: [
+    { key: "plantel", type: "string", required: true }, // campus code
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params, mysql }) {
+    const plantel = String(params.plantel);
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    const start = `${year}-${String(month).padStart(2, "0")}-01 00:00:00`;
+    const endDate = new Date(year, month, 1); // first day of next month
+    const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-01 00:00:00`;
+
+    const isPMGroup = ["PM", "PMA", "PMB"].includes(plantel);
+
+    let rows: { depto: string; qty: number }[] = [];
+
+    if (isPMGroup) {
+      const a = await fetchCampus(mysql, "PM", "PMA", start, end);
+      const b = await fetchCampus(mysql, "PM", "PMB", start, end);
+      const merged = new Map<string, number>();
+      for (const r of [...a, ...b]) merged.set(r.depto, (merged.get(r.depto) ?? 0) + r.qty);
+      rows = Array.from(merged.entries()).map(([depto, qty]) => ({ depto, qty }));
+      rows.sort((x, y) => (y.qty - x.qty) || x.depto.localeCompare(y.depto));
+    } else {
+      rows = await fetchCampus(mysql, plantel, plantel, start, end);
+    }
+
+    return {
+      metricId: "sapf",
+      label: "Atención a Padres (SAPF)",
+      params: { plantel, month, year },
+      schema,
+      rows,
+      meta: { generatedAt: new Date().toISOString(), source: "mysql" }
+    };
+  }
+};
+
+## server/metrics/_template.ts
+
+import type { MetricDefinition } from "../dashboard/types";
+
+export default <MetricDefinition>{
+  id: "your_metric_id",
+  label: "Your Metric",
+  params: [
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema: {
+    dims: [{ key: "dim1" }],
+    measures: [{ key: "value", format: "int" }]
+  },
+  async fetch({ params, mysql, http }) {
+    void mysql;
+    void http;
+
+    return {
+      metricId: "your_metric_id",
+      label: "Your Metric",
+      params,
+      schema: this.schema,
+      rows: [],
+      meta: { generatedAt: new Date().toISOString(), source: "mixed" }
+    };
+  }
+};
+
+## server/db/mysql.ts
+
+import mysql from "mysql2/promise";
+
+let pool: mysql.Pool | null = null;
+
+export function getMysqlPool() {
+  if (pool) return pool;
+
+  const config = useRuntimeConfig();
+  if (!config.dbHost || !config.dbUser || !config.dbName) {
+    throw new Error("Missing DB_* env vars. Set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME.");
+  }
+
+  pool = mysql.createPool({
+    host: String(config.dbHost),
+    user: String(config.dbUser),
+    password: String(config.dbPassword ?? ""),
+    database: String(config.dbName),
+    waitForConnections: true,
+    connectionLimit: 10,
+    namedPlaceholders: false,
+  });
+
+  return pool;
+}
+
+## server/dashboard/engine.ts
+
+import type { MetricDefinition } from "./types";
+import { readdir, access } from "node:fs/promises";
+import { constants as FS_CONSTANTS } from "node:fs";
+import path from "node:path";
+import { createJiti } from "jiti";
+
+let registry: Map<string, MetricDefinition> | null = null;
+
+/**
+ * Why this exists:
+ * - Some runtimes won't provide Vite-transformed `import.meta.glob` at execution time
+ * - Direct ESM dynamic import of `.ts` from disk fails with: ERR_UNKNOWN_FILE_EXTENSION
+ *
+ * Fix:
+ * - Prefer `import.meta.glob` if available
+ * - Otherwise, use `jiti` to load TS modules from disk (compiles TS on the fly)
+ * - Resolve the real metrics directory from process.cwd()
+ */
+
+async function firstExistingDir(candidates: string[]) {
+  for (const dir of candidates) {
+    try {
+      await access(dir, FS_CONSTANTS.F_OK);
+      return dir;
+    } catch {
+      // continue
+    }
+  }
+  return null;
+}
+
+function isMetricFile(file: string) {
+  if (file.startsWith("_")) return false;
+  if (file.endsWith(".d.ts")) return false;
+  return (
+    file.endsWith(".ts") ||
+    file.endsWith(".js") ||
+    file.endsWith(".mjs") ||
+    file.endsWith(".cjs")
+  );
+}
+
+export async function getMetricRegistry(): Promise<Map<string, MetricDefinition>> {
+  if (registry) return registry;
+
+  registry = new Map<string, MetricDefinition>();
+
+  // 1) Best case: Vite glob (only when provided by the runtime)
+  const anyImportMeta = import.meta as any;
+  if (anyImportMeta && typeof anyImportMeta.glob === "function") {
+    const modules = anyImportMeta.glob("../metrics/*.{ts,js}", { eager: true }) as Record<
+      string,
+      { default?: MetricDefinition }
+    >;
+
+    for (const mod of Object.values(modules)) {
+      const def = mod?.default;
+      if (!def?.id) continue;
+      registry.set(def.id, def);
+    }
+    return registry;
+  }
+
+  // 2) Fallback: scan from disk using process.cwd()
+  const cwd = process.cwd();
+  const candidates = [
+    path.join(cwd, "server", "metrics"),          // source (dev)
+    path.join(cwd, ".nuxt", "server", "metrics"), // possible emitted
+    path.join(cwd, ".output", "server", "metrics")// nitro output
+  ];
+
+  const metricsDir = await firstExistingDir(candidates);
+  if (!metricsDir) {
+    throw new Error(
+      `Metrics directory not found. Tried:\n- ${candidates.join("\n- ")}\n\n` +
+      `Expected: <projectRoot>/server/metrics/*.ts`
+    );
+  }
+
+  const files = (await readdir(metricsDir)).filter(isMetricFile);
+
+  // jiti can load TS/JS from disk without Node ESM choking on ".ts"
+  const jiti = createJiti(import.meta.url, {
+    interopDefault: true,
+    esmResolve: true
+  });
+
+  for (const file of files) {
+    const fullPath = path.join(metricsDir, file);
+
+    // jiti returns module exports; default export is the MetricDefinition
+    const mod = jiti(fullPath) as any;
+    const def = (mod?.default ?? mod) as MetricDefinition | null;
+
+    if (!def?.id) continue;
+    registry.set(def.id, def);
+  }
+
+  return registry;
+}
+
+export async function getMetric(id: string): Promise<MetricDefinition | null> {
+  const reg = await getMetricRegistry();
+  return reg.get(id) ?? null;
+}
+
+## server/dashboard/narrative.ts
+
+import type { Dataset } from "./types";
+
+export function describeEntregas(ds: Dataset) {
+  const r = ds.rows?.[0] as any;
+  if (!r) return "Sin datos.";
+
+  const asignadas = Number(r.asignadas ?? 0);
+  const entregadas = Number(r.entregadas ?? 0);
+  const noentregadas = Number(r.noentregadas ?? 0);
+  const destiempo = Number(r.destiempo ?? 0);
+  const pendientes = Number(r.pendientes ?? 0);
+
+  const rate = asignadas > 0 ? (entregadas / asignadas) * 100 : 0;
+
+  return [
+    `Entregadas: ${entregadas}/${asignadas} (${rate.toFixed(1)}%).`,
+    `Destiempo: ${destiempo}.`,
+    `No entregó: ${noentregadas}.`,
+    `Pendientes: ${pendientes}.`
+  ].join(" ");
+}
+
+## server/dashboard/relations.ts
+
+// server/dashboard/relations.ts
+import relations from "../../dashboard/relations.json";
+
+export function relatedMetrics(metricId: string) {
+  const links = (relations as any).links as any[];
+  const rel = links.filter(l => l.fromMetric === metricId || l.toMetric === metricId);
+  return rel;
+}
+
+## server/dashboard/types.ts
+
+// server/dashboard/types.ts
+export type MetricParamType = "string" | "number" | "date" | "month" | "year" | "enum";
+
+export type MetricParamDef = {
+  key: string;
+  type: MetricParamType;
+  required?: boolean;
+  default?: unknown;
+  enum?: string[];
+};
+
+export type DatasetSchema = {
+  // dimensions you group/join on (plantel, month, teacher, etc.)
+  dims: { key: string; label?: string }[];
+  // numeric measures (counts, rates, etc.)
+  measures: { key: string; label?: string; format?: "int" | "pct" | "float" }[];
+};
+
+export type DatasetRow = Record<string, string | number | boolean | null>;
+
+export type Dataset = {
+  metricId: string;
+  label: string;
+  params: Record<string, any>;
+  schema: DatasetSchema;
+  rows: DatasetRow[];
+  meta?: {
+    generatedAt: string;
+    source?: "mysql" | "http" | "csv" | "mixed";
+  };
+};
+
+export type MetricDefinition = {
+  id: string;
+  label: string;
+  params: MetricParamDef[];
+  schema: DatasetSchema;
+  // fetch must return standardized dataset rows
+  fetch: (ctx: {
+    params: Record<string, any>;
+    mysql: import("mysql2/promise").Pool;
+    http: <T>(url: string, init?: RequestInit) => Promise<T>;
+  }) => Promise<Dataset>;
+};
+
+## server/api/narrative.get.ts
+
+import { getMetric } from "../dashboard/engine";
+import { getMysqlPool } from "../db/mysql";
+import { describeEntregas } from "../dashboard/narrative";
+
+export default defineEventHandler(async (event) => {
+  const q = getQuery(event) as Record<string, any>;
+  const metricId = String(q.metricId || "");
+
+  const metric = await getMetric(metricId);
+  if (!metric) throw createError({ statusCode: 404, statusMessage: "Unknown metricId" });
+
+  const mysql = getMysqlPool();
+  const http = async <T>(url: string, init?: RequestInit) => $fetch<T>(url, init);
+
+  const ds = await metric.fetch({ params: q, mysql, http });
+
+  if (metricId === "entregas") return { text: describeEntregas(ds) };
+
+  return { text: "Narrative not implemented for this metric." };
+});
+
+## server/api/metrics/[id].get.ts
+
+import { getMetric } from "../../dashboard/engine";
+import { getMysqlPool } from "../../db/mysql";
+
+export default defineEventHandler(async (event) => {
+  const id = getRouterParam(event, "id")!;
+  const metric = await getMetric(id);
+
+  if (!metric) {
+    throw createError({ statusCode: 404, statusMessage: `Unknown metric: ${id}` });
+  }
+
+  const params = getQuery(event) as Record<string, any>;
+  const mysql = getMysqlPool();
+
+  const http = async <T>(url: string, init?: RequestInit) => {
+    return await $fetch<T>(url, init);
+  };
+
+  const dataset = await metric.fetch({ params, mysql, http });
+  return dataset;
+});
+
+## public/robots.txt
+
+User-Agent: *
+Disallow:
+
+## plugins/echarts.client.ts
+
+import { defineNuxtPlugin } from "#app";
+import VChart from "vue-echarts";
+
+// ECharts core (tree-shaking) + required pieces
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+
+import { BarChart, LineChart, PieChart } from "echarts/charts";
+
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DatasetComponent,
+  TitleComponent,
+  TransformComponent
+} from "echarts/components";
+
+import { UniversalTransition } from "echarts/features";
+
+export default defineNuxtPlugin((nuxtApp) => {
+  // Register ECharts modules (THIS fixes: "Renderer 'undefined' is not imported")
+  use([
+    CanvasRenderer,
+
+    // charts we use (bar now; line/pie kept for upcoming metrics)
+    BarChart,
+    LineChart,
+    PieChart,
+
+    // components
+    GridComponent,
+    TooltipComponent,
+    LegendComponent,
+    DatasetComponent,
+    TitleComponent,
+    TransformComponent,
+
+    // morph / transitions
+    UniversalTransition
+  ]);
+
+  // Register vue-echarts component globally
+  nuxtApp.vueApp.component("VChart", VChart);
+});
+
+## pages/index.vue
+
+<script setup lang="ts">
+await navigateTo("/kardex");
+</script>
+
+<template>
+  <div style="color: var(--muted);">Redirecting…</div>
+</template>
+
+## pages/kardex.vue
+
+<template>
+  <div class="page">
+    <div class="head">
+      <div>
+        <div class="h1">Kardex BI</div>
+        <div class="sub">Comparación flexible por lado: Plantel + Mes + Año</div>
+      </div>
+
+      <div class="filtersRow">
+        <!-- SIDE A -->
+        <div class="filterCard">
+          <div class="filterTitle">Lado A</div>
+          <div class="grid">
+            <div class="field">
+              <label>Plantel</label>
+              <select v-model="plantelA">
+                <option v-for="p in planteles" :key="p.code" :value="p.code">
+                  {{ p.label }} ({{ p.code }})
+                </option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Mes</label>
+              <input type="number" min="1" max="12" v-model.number="monthA" />
+            </div>
+            <div class="field">
+              <label>Año</label>
+              <input type="number" min="2000" max="2100" v-model.number="yearA" />
+            </div>
+          </div>
+          <div class="pill">{{ aPill }}</div>
+        </div>
+
+        <!-- SIDE B -->
+        <div class="filterCard">
+          <div class="filterTitle">Lado B</div>
+          <div class="grid">
+            <div class="field">
+              <label>Plantel</label>
+              <select v-model="plantelB">
+                <option v-for="p in planteles" :key="p.code" :value="p.code">
+                  {{ p.label }} ({{ p.code }})
+                </option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Mes</label>
+              <input type="number" min="1" max="12" v-model.number="monthB" />
+            </div>
+            <div class="field">
+              <label>Año</label>
+              <input type="number" min="2000" max="2100" v-model.number="yearB" />
+            </div>
+          </div>
+          <div class="pill">{{ bPill }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENTREGAS -->
+    <section class="section">
+      <div class="sectionTitle">Entregas Mensuales</div>
+
+      <div class="grid4">
+        <KpiCard title="Entregadas" :left="aEntregas.entregadas" :right="bEntregas.entregadas" :leftLabel="aPill" :rightLabel="bPill" />
+        <KpiCard title="Destiempo" :left="aEntregas.destiempo" :right="bEntregas.destiempo" :leftLabel="aPill" :rightLabel="bPill" />
+        <KpiCard title="No entregó" :left="aEntregas.noentregadas" :right="bEntregas.noentregadas" :leftLabel="aPill" :rightLabel="bPill" />
+        <KpiCard title="Asignadas" :left="aEntregas.asignadas" :right="bEntregas.asignadas" :leftLabel="aPill" :rightLabel="bPill" />
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panelTitle">Lista de Entregas — {{ aPill }}</div>
+          <EntregasDetalleTable :rows="aDetalleRows" />
+        </div>
+        <div class="panel">
+          <div class="panelTitle">Lista de Entregas — {{ bPill }}</div>
+          <EntregasDetalleTable :rows="bDetalleRows" />
+        </div>
+      </div>
+    </section>
+
+    <!-- PLANEACIONES -->
+    <section class="section">
+      <div class="sectionTitle">Planeaciones Revisadas</div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panelTitle">{{ aPill }}</div>
+
+          <div v-if="aPlDs.pending.value" class="empty">Cargando…</div>
+          <div v-else-if="aPlError" class="empty err">Error: {{ aPlError }}</div>
+          <div v-else-if="aPlaneacionesRows.length === 0" class="empty">
+            Sin datos / No aplica.
+          </div>
+
+          <div v-for="item in aPlaneacionesRows" :key="item.revisa" class="progressRow">
+            <div class="progressHead">
+              <div class="who">{{ item.revisa }}</div>
+              <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
+              <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(2) }}%</div>
+            </div>
+            <div class="bar"><div class="fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelTitle">{{ bPill }}</div>
+
+          <div v-if="bPlDs.pending.value" class="empty">Cargando…</div>
+          <div v-else-if="bPlError" class="empty err">Error: {{ bPlError }}</div>
+          <div v-else-if="bPlaneacionesRows.length === 0" class="empty">
+            Sin datos / No aplica.
+          </div>
+
+          <div v-for="item in bPlaneacionesRows" :key="item.revisa" class="progressRow">
+            <div class="progressHead">
+              <div class="who">{{ item.revisa }}</div>
+              <div class="nums">({{ n(item.conteo) }} / {{ planeaTotal(item) }})</div>
+              <div class="pct">{{ pct(n(item.conteo), planeaTotal(item)).toFixed(2) }}%</div>
+            </div>
+            <div class="bar"><div class="fill" :style="{ width: pct(n(item.conteo), planeaTotal(item)) + '%' }"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BITÁCORAS -->
+    <section class="section">
+      <div class="sectionTitle">Bitácoras (días hábiles)</div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panelTitle">{{ aPill }}</div>
+          <BitacorasGrid :year="yearA" :month="monthA" :presentDays="aBitacorasDays" />
+        </div>
+        <div class="panel">
+          <div class="panelTitle">{{ bPill }}</div>
+          <BitacorasGrid :year="yearB" :month="monthB" :presentDays="bBitacorasDays" />
+        </div>
+      </div>
+    </section>
+
+    <!-- OBSERVACIONES GRUTA -->
+    <section class="section">
+      <div class="sectionTitle">Observaciones GRUTA</div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panelTitle">{{ aPill }}</div>
+          <div class="htmlWrap" v-html="aObsChartHtml"></div>
+          <div class="obsText">{{ aObsText }}</div>
+        </div>
+        <div class="panel">
+          <div class="panelTitle">{{ bPill }}</div>
+          <div class="htmlWrap" v-html="bObsChartHtml"></div>
+          <div class="obsText">{{ bObsText }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAPF -->
+    <section class="section">
+      <div class="sectionTitle">Atención a Padres (SAPF)</div>
+
+      <div class="grid1">
+        <CompareBarChart
+          title="SAPF (qty por depto)"
+          :leftName="aPill"
+          :rightName="bPill"
+          :categories="sapfCategories"
+          :leftSeries="sapfLeft"
+          :rightSeries="sapfRight"
+        />
+      </div>
+    </section>
+
+    <!-- ATTENDANCE -->
+    <section class="section">
+      <div class="sectionTitle">Seguimiento a Ausencias</div>
+
+      <div class="grid1">
+        <CompareBarChart
+          title="Ausencias (to_check + addressed por grupo)"
+          :leftName="aPill"
+          :rightName="bPill"
+          :categories="attendanceCategories"
+          :leftSeries="attendanceLeft"
+          :rightSeries="attendanceRight"
+        />
+      </div>
+    </section>
+
+    <!-- RUTA removed completely (NOT GRUTA) -->
+  </div>
+</template>
+
+<script setup lang="ts">
+import KpiCard from "~/components/KpiCard.vue";
+import EntregasDetalleTable from "~/components/EntregasDetalleTable.vue";
+import CompareBarChart from "~/components/CompareBarChart.vue";
+import BitacorasGrid from "~/components/BitacorasGrid.vue";
+
+import { PLANTELES, getPlantelByCode, mapAttendancePlantel } from "~/shared/planteles";
+import { monthLabelEs, clampMonth } from "~/utils/dates";
+
+const planteles = PLANTELES;
+
+const now = new Date();
+
+// Side A
+const plantelA = ref("PM");
+const monthA = ref(clampMonth(now.getMonth() + 1));
+const yearA = ref(now.getFullYear());
+
+// Side B
+const plantelB = ref("PT");
+const monthB = ref(clampMonth(now.getMonth() + 1));
+const yearB = ref(now.getFullYear());
+
+const a = computed(() => getPlantelByCode(plantelA.value));
+const b = computed(() => getPlantelByCode(plantelB.value));
+
+const aLabel = computed(() => a.value?.label ?? "A");
+const bLabel = computed(() => b.value?.label ?? "B");
+
+const aMonthName = computed(() => monthLabelEs(yearA.value, monthA.value));
+const bMonthName = computed(() => monthLabelEs(yearB.value, monthB.value));
+
+const aPill = computed(() => `${aLabel.value} · ${aMonthName.value} ${yearA.value}`);
+const bPill = computed(() => `${bLabel.value} · ${bMonthName.value} ${yearB.value}`);
+
+function n(v: any) {
+  const x = Number(v ?? 0);
+  return Number.isFinite(x) ? x : 0;
+}
+function pct(conteo: number, total: number) {
+  if (!total) return 0;
+  const p = (conteo / total) * 100;
+  return Math.max(0, Math.min(100, p));
+}
+function planeaTotal(item: any) {
+  const total = n(item?.total);
+  const conteo = n(item?.conteo);
+  return Math.max(total, conteo);
+}
+
+// -------------------- ENTREGAS (A/B) --------------------
+const aEntQuery = computed(() => ({ id: a.value?.id ?? 0, month: monthA.value, year: yearA.value }));
+const bEntQuery = computed(() => ({ id: b.value?.id ?? 0, month: monthB.value, year: yearB.value }));
+
+const aEntDs = useFetch<any>("/api/metrics/entregas", { query: aEntQuery, watch: [aEntQuery] });
+const bEntDs = useFetch<any>("/api/metrics/entregas", { query: bEntQuery, watch: [bEntQuery] });
+
+const aEntregas = computed(() => (aEntDs.data.value?.rows?.[0] ?? { asignadas: 0, destiempo: 0, entregadas: 0, noentregadas: 0, pendientes: 0 }));
+const bEntregas = computed(() => (bEntDs.data.value?.rows?.[0] ?? { asignadas: 0, destiempo: 0, entregadas: 0, noentregadas: 0, pendientes: 0 }));
+
+// -------------------- LISTA DETALLE (A/B) --------------------
+const aDetQuery = computed(() => ({ plantel: a.value?.id ?? 0, mes: monthA.value, year: yearA.value }));
+const bDetQuery = computed(() => ({ plantel: b.value?.id ?? 0, mes: monthB.value, year: yearB.value }));
+
+const aDetDs = useFetch<any>("/api/metrics/entregas_detalle", { query: aDetQuery, watch: [aDetQuery] });
+const bDetDs = useFetch<any>("/api/metrics/entregas_detalle", { query: bDetQuery, watch: [bDetQuery] });
+
+const aDetalleRows = computed(() => aDetDs.data.value?.rows ?? []);
+const bDetalleRows = computed(() => bDetDs.data.value?.rows ?? []);
+
+// -------------------- PLANEACIONES (A/B) --------------------
+const aPlQuery = computed(() => ({ plantel: aLabel.value, mes: monthA.value, year: yearA.value }));
+const bPlQuery = computed(() => ({ plantel: bLabel.value, mes: monthB.value, year: yearB.value }));
+
+const aPlDs = useFetch<any>("/api/metrics/planeaciones", { query: aPlQuery, watch: [aPlQuery] });
+const bPlDs = useFetch<any>("/api/metrics/planeaciones", { query: bPlQuery, watch: [bPlQuery] });
+
+const aPlaneacionesRows = computed(() => aPlDs.data.value?.rows ?? []);
+const bPlaneacionesRows = computed(() => bPlDs.data.value?.rows ?? []);
+
+const aPlError = computed(() => {
+  const e: any = aPlDs.error.value;
+  return e?.data?.message || e?.message || "";
+});
+const bPlError = computed(() => {
+  const e: any = bPlDs.error.value;
+  return e?.data?.message || e?.message || "";
+});
+
+// -------------------- BITÁCORAS (A/B) --------------------
+const aBitQuery = computed(() => ({ plantel: plantelA.value, month: monthA.value, year: yearA.value }));
+const bBitQuery = computed(() => ({ plantel: plantelB.value, month: monthB.value, year: yearB.value }));
+
+const aBitDs = useFetch<any>("/api/metrics/bitacoras", { query: aBitQuery, watch: [aBitQuery] });
+const bBitDs = useFetch<any>("/api/metrics/bitacoras", { query: bBitQuery, watch: [bBitQuery] });
+
+const aBitacorasDays = computed(() => (aBitDs.data.value?.rows ?? []).map((r: any) => String(r.day)));
+const bBitacorasDays = computed(() => (bBitDs.data.value?.rows ?? []).map((r: any) => String(r.day)));
+
+// -------------------- OBSERVACIONES (A/B) --------------------
+const aObsQuery = computed(() => ({
+  campus: a.value?.campus ?? "Unknown",
+  nivel: a.value?.nivel ?? "Unknown",
+  month: monthA.value,
+  year: yearA.value
+}));
+const bObsQuery = computed(() => ({
+  campus: b.value?.campus ?? "Unknown",
+  nivel: b.value?.nivel ?? "Unknown",
+  month: monthB.value,
+  year: yearB.value
+}));
+
+const aObsDs = useFetch<any>("/api/metrics/observaciones", { query: aObsQuery, watch: [aObsQuery] });
+const bObsDs = useFetch<any>("/api/metrics/observaciones", { query: bObsQuery, watch: [bObsQuery] });
+
+const aObsChartHtml = computed(() => String(aObsDs.data.value?.rows?.[0]?.chartHtml ?? ""));
+const bObsChartHtml = computed(() => String(bObsDs.data.value?.rows?.[0]?.chartHtml ?? ""));
+const aObsText = computed(() => String(aObsDs.data.value?.rows?.[0]?.text ?? ""));
+const bObsText = computed(() => String(bObsDs.data.value?.rows?.[0]?.text ?? ""));
+
+// -------------------- SAPF (A/B) --------------------
+const aSapfQuery = computed(() => ({ plantel: plantelA.value, month: monthA.value, year: yearA.value }));
+const bSapfQuery = computed(() => ({ plantel: plantelB.value, month: monthB.value, year: yearB.value }));
+
+const aSapfDs = useFetch<any>("/api/metrics/sapf", { query: aSapfQuery, watch: [aSapfQuery] });
+const bSapfDs = useFetch<any>("/api/metrics/sapf", { query: bSapfQuery, watch: [bSapfQuery] });
+
+const sapfCategories = computed(() => {
+  const ar = (aSapfDs.data.value?.rows ?? []) as any[];
+  const br = (bSapfDs.data.value?.rows ?? []) as any[];
+  const set = new Set<string>();
+  for (const r of ar) set.add(String(r.depto));
+  for (const r of br) set.add(String(r.depto));
+  return Array.from(set);
+});
+
+const sapfLeft = computed(() => {
+  const ar = (aSapfDs.data.value?.rows ?? []) as any[];
+  const map = new Map<string, number>();
+  for (const r of ar) map.set(String(r.depto), n(r.qty));
+  return sapfCategories.value.map(k => map.get(k) ?? 0);
+});
+
+const sapfRight = computed(() => {
+  const br = (bSapfDs.data.value?.rows ?? []) as any[];
+  const map = new Map<string, number>();
+  for (const r of br) map.set(String(r.depto), n(r.qty));
+  return sapfCategories.value.map(k => map.get(k) ?? 0);
+});
+
+// -------------------- ATTENDANCE (A/B) --------------------
+const aAttendancePlantel = computed(() => mapAttendancePlantel(a.value?.asistencia ?? plantelA.value));
+const bAttendancePlantel = computed(() => mapAttendancePlantel(b.value?.asistencia ?? plantelB.value));
+
+const aAttQuery = computed(() => ({ plantel: aAttendancePlantel.value, mes: monthA.value, year: yearA.value }));
+const bAttQuery = computed(() => ({ plantel: bAttendancePlantel.value, mes: monthB.value, year: yearB.value }));
+
+const aAttDs = useFetch<any>("/api/metrics/attendance", { query: aAttQuery, watch: [aAttQuery] });
+const bAttDs = useFetch<any>("/api/metrics/attendance", { query: bAttQuery, watch: [bAttQuery] });
+
+const attendanceCategories = computed(() => {
+  const ar = (aAttDs.data.value?.rows ?? []) as any[];
+  const br = (bAttDs.data.value?.rows ?? []) as any[];
+  const set = new Set<string>();
+  for (const r of ar) set.add(`${r.grado} ${r.grupo}`);
+  for (const r of br) set.add(`${r.grado} ${r.grupo}`);
+  return Array.from(set);
+});
+
+const attendanceLeft = computed(() => {
+  const ar = (aAttDs.data.value?.rows ?? []) as any[];
+  const map = new Map<string, number>();
+  for (const r of ar) map.set(`${r.grado} ${r.grupo}`, n(r.to_check) + n(r.addressed));
+  return attendanceCategories.value.map(k => map.get(k) ?? 0);
+});
+
+const attendanceRight = computed(() => {
+  const br = (bAttDs.data.value?.rows ?? []) as any[];
+  const map = new Map<string, number>();
+  for (const r of br) map.set(`${r.grado} ${r.grupo}`, n(r.to_check) + n(r.addressed));
+  return attendanceCategories.value.map(k => map.get(k) ?? 0);
+});
+</script>
+
+<style scoped>
+.page { display: flex; flex-direction: column; gap: 18px; }
+.head { display: flex; flex-direction: column; gap: 14px; }
+.h1 { font-size: 22px; font-weight: 900; }
+.sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+.filtersRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px) { .filtersRow { grid-template-columns: 1fr; } }
+
+.filterCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.filterTitle { font-weight: 900; margin-bottom: 10px; }
+.grid { display: grid; grid-template-columns: 1fr 120px 140px; gap: 10px; }
+@media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 12px; color: var(--muted); }
+input, select {
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 10px;
+  outline: none;
+}
+input:focus, select:focus { border-color: rgba(96,165,250,0.55); }
+
+.pill {
+  margin-top: 10px;
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.14);
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.section {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,0.02);
+}
+.sectionTitle { font-weight: 900; margin-bottom: 12px; }
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0,0,0,0.12);
+}
+.panelTitle { font-weight: 900; margin-bottom: 10px; }
+
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.grid1 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+
+@media (max-width: 1100px) { .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+.empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+.empty.err { color: rgba(248, 113, 113, 0.95); }
+
+.progressRow { padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.07); }
+.progressRow:last-child { border-bottom: none; }
+
+.progressHead {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.who { font-weight: 800; }
+.nums { color: var(--muted); font-size: 12px; }
+.pct { font-weight: 900; font-size: 12px; }
+
+.bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(96,165,250,0.85), rgba(34,197,94,0.75));
+  border-radius: 999px;
+}
+
+.htmlWrap :deep(svg),
+.htmlWrap :deep(img),
+.htmlWrap :deep(canvas) {
+  max-width: 100%;
+  height: auto;
+}
+.obsText {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+}
+</style>
+
+## erver/metrics/bitacoras.ts
+
+import type { MetricDefinition, DatasetSchema } from "../dashboard/types";
+
+const FEED =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQP4wuU0vxaN7ez_ka4U1Ep2OYkkGo2Mn_795N1p_nFjeM2J6tdt0h7kN59e0mPRMv5wz6nLNgN65Zp/pub?gid=0&single=true&output=csv";
+
+const schema: DatasetSchema = {
+  dims: [{ key: "day", label: "Día" }],
+  measures: [{ key: "cumple", label: "Cumple", format: "bool" }]
+};
+
+function parseCSV(text: string): string[][] {
+  // Minimal CSV parser (handles quotes and commas)
+  const rows: string[][] = [];
+  let cur = "";
+  let inQuotes = false;
+  const row: string[] = [];
+
+  const pushCell = () => {
+    row.push(cur);
+    cur = "";
+  };
+  const pushRow = () => {
+    rows.push([...row]);
+    row.length = 0;
+  };
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (ch === '"') {
+      const next = text[i + 1];
+      if (inQuotes && next === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (!inQuotes && ch === ",") {
+      pushCell();
+      continue;
+    }
+
+    if (!inQuotes && (ch === "\n" || ch === "\r")) {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      pushCell();
+      pushRow();
+      continue;
+    }
+
+    cur += ch;
+  }
+
+  // flush last
+  if (cur.length || row.length) {
+    pushCell();
+    pushRow();
+  }
+
+  return rows.filter(r => r.some(c => String(c ?? "").trim() !== ""));
+}
+
+function pick(obj: Record<string, string>, key: string) {
+  const k = Object.keys(obj).find(x => x.toLowerCase() === key.toLowerCase());
+  return k ? obj[k] : "";
+}
+
+function toYMD(dateStr: string) {
+  // Expecting something that Date can parse
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export default <MetricDefinition>{
+  id: "bitacoras",
+  label: "Bitácoras",
+  params: [
+    { key: "plantel", type: "string", required: true },
+    { key: "month", type: "number", required: true },
+    { key: "year", type: "number", required: true }
+  ],
+  schema,
+  async fetch({ params }) {
+    const plantel = String(params.plantel);
+    const month = Number(params.month);
+    const year = Number(params.year);
+
+    const res = await fetch(FEED);
+    if (!res.ok) {
+      throw new Error(`Bitácoras feed error: ${res.status} ${res.statusText}`);
+    }
+
+    const csv = await res.text();
+    const table = parseCSV(csv);
+    if (table.length < 2) {
+      return { metricId: "bitacoras", label: "Bitácoras", params: { plantel, month, year }, schema, rows: [] };
+    }
+
+    const headers = table[0].map(h => String(h ?? "").trim());
+    const body = table.slice(1);
+
+    const rowsObj = body.map(r => {
+      const obj: Record<string, string> = {};
+      for (let i = 0; i < headers.length; i++) obj[headers[i]] = String(r[i] ?? "");
+      return obj;
+    });
+
+    const presentDays = new Set<string>();
+
+    for (const r of rowsObj) {
+      const rPlantel = pick(r, "plantel");
+      const rFecha = pick(r, "fecha");
+      if (!rPlantel || !rFecha) continue;
+      if (String(rPlantel).trim() !== plantel) continue;
+
+      const ymd = toYMD(rFecha);
+      if (!ymd) continue;
+
+      const d = new Date(ymd + "T00:00:00");
+      if (d.getFullYear() !== year) continue;
+      if (d.getMonth() + 1 !== month) continue;
+
+      presentDays.add(ymd);
+    }
+
+    const out = Array.from(presentDays)
+      .sort()
+      .map(day => ({ day, cumple: true }));
+
+    return {
+      metricId: "bitacoras",
+      label: "Bitácoras",
+      params: { plantel, month, year },
+      schema,
+      rows: out,
+      meta: { generatedAt: new Date().toISOString(), source: "csv" }
+    };
+  }
+};
+
+## dashboard/layout.kardex.json
+
+{
+  "page": "kardex",
+  "filters": ["plantelA", "plantelB", "month", "year"],
+  "sections": [
+    { "id": "entregas", "title": "Entregas Mensuales", "metrics": ["entregas", "entregas_detalle"] },
+    { "id": "attendance", "title": "Seguimiento a Ausencias", "metrics": ["attendance"] },
+    { "id": "ruta", "title": "Ruta", "metrics": ["ruta"] },
+    { "id": "global", "title": "Global", "metrics": ["entregas_global"] }
+  ]
+}
+
+## dashboard/relations.json
+
+{
+  "entities": {
+    "plantel": { "key": "plantel" },
+    "teacher": { "key": "teacher" }
+  },
+  "links": [
+    {
+      "fromMetric": "ruta",
+      "fromKey": "observatorName",
+      "toMetric": "ruta",
+      "toKey": "observatorName",
+      "entity": "teacher"
+    }
+  ]
+}
+
+## composables/useComments.ts
+
+type CommentRow = { section_identifier: string; comment: string };
+
+export function useComments() {
+  const config = useRuntimeConfig();
+
+  async function loadComments(opts: { plantel: string; year: number; month: number }) {
+    const url = `${config.public?.botBaseUrl ?? config.botBaseUrl}/kardex/comments`;
+    const rows = await $fetch<CommentRow[]>(url, { method: "GET", params: opts as any });
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r.section_identifier] = r.comment;
+    return map;
+  }
+
+  async function saveComment(opts: { plantel: string; year: number; month: number; section_identifier: string; comment: string }) {
+    const url = `${config.public?.botBaseUrl ?? config.botBaseUrl}/kardex/comments`;
+    await $fetch(url, { method: "POST", body: opts });
+  }
+
+  return { loadComments, saveComment };
+}
+
+## composables/useMetric.ts
+
+export function useMetric<T = any>(
+  metricId: string,
+  params: Record<string, any>
+) {
+  const query = computed(() => ({ ...params }));
+  return useFetch<T>(`/api/metrics/${metricId}`, {
+    query,
+    watch: [query],
+  });
+}
+
+## components/BitacorasGrid.vue
+
+<template>
+  <div class="wrap">
+    <div class="grid">
+      <div
+        v-for="d in days"
+        :key="d.ymd"
+        class="cell"
+        :class="{
+          ok: d.present,
+          miss: !d.present,
+          future: d.future
+        }"
+        :title="d.ymd"
+      >
+        {{ d.dd }}
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="dot ok"></span><span>cumple</span>
+      <span class="dot miss"></span><span>no cumple</span>
+      <span class="dot future"></span><span>futuro</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  year: number;
+  month: number; // 1..12
+  presentDays: string[]; // ["YYYY-MM-DD", ...]
+}>();
+
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const present = computed(() => new Set(props.presentDays.map(String)));
+
+const days = computed(() => {
+  const out: { ymd: string; dd: string; present: boolean; future: boolean }[] = [];
+
+  const start = new Date(props.year, props.month - 1, 1);
+  const end = new Date(props.year, props.month, 0);
+
+  const today = new Date();
+  const todayYMD = ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+
+  for (let day = 1; day <= end.getDate(); day++) {
+    const dt = new Date(props.year, props.month - 1, day);
+
+    const dow = dt.getDay(); // 0 Sun .. 6 Sat
+    if (dow === 0 || dow === 6) continue; // weekdays only, like legacy
+
+    const key = ymd(dt);
+    const isFuture = key > todayYMD;
+
+    out.push({
+      ymd: key,
+      dd: String(day).padStart(2, "0"),
+      present: present.value.has(key),
+      future: isFuture
+    });
+  }
+
+  return out;
+});
+</script>
+
+<style scoped>
+.wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-weight: 900;
+  color: #0b1220;
+  user-select: none;
+}
+.cell.ok { background: rgba(34,197,94,0.85); }
+.cell.miss { background: rgba(239,68,68,0.85); }
+.cell.future { background: rgba(148,163,184,0.45); color: #e2e8f0; }
+
+.legend {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  border: 1px solid var(--border);
+}
+.dot.ok { background: rgba(34,197,94,0.85); }
+.dot.miss { background: rgba(239,68,68,0.85); }
+.dot.future { background: rgba(148,163,184,0.45); }
+</style>
+
+## components/CompareBarChart.vue
+
+<template>
+  <div class="card">
+    <div class="header">
+      <div class="title">{{ title }}</div>
+      <div class="meta">{{ leftName }} vs {{ rightName }}</div>
+    </div>
+
+    <client-only>
+      <VChart class="chart" :option="option" autoresize />
+    </client-only>
+  </div>
+</template>
+
+<script setup lang="ts">
+import VChart from "vue-echarts";
+
+const props = defineProps<{
+  title: string;
+  leftName: string;
+  rightName: string;
+  categories: string[];
+  leftSeries: number[];
+  rightSeries: number[];
+}>();
+
+const option = computed(() => {
+  return {
+    tooltip: { trigger: "axis" },
+    legend: { textStyle: { color: "#e5e7eb" } },
+    grid: { left: 28, right: 18, top: 30, bottom: 38, containLabel: true },
+    xAxis: {
+      type: "category",
+      data: props.categories,
+      axisLabel: { color: "#9ca3af", interval: 0, rotate: 20 },
+      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#9ca3af" },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+    },
+    series: [
+      { name: props.leftName, type: "bar", data: props.leftSeries },
+      { name: props.rightName, type: "bar", data: props.rightSeries }
+    ]
+  };
+});
+</script>
+
+<style scoped>
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.title { font-weight: 900; }
+.meta { color: var(--muted); font-size: 12px; }
+.chart { width: 100%; height: 360px; }
+</style>
+
+## components/EntregasDetalleTable.vue
+
+<template>
+  <div class="wrap">
+    <div class="col">
+      <div v-for="(item, i) in left" :key="'l'+i" class="row">
+        <span class="dot" :style="{ backgroundColor: color(item) }"></span>
+        <span class="text">{{ i + 1 }}.- {{ item.title }}</span>
+      </div>
+    </div>
+
+    <div class="col">
+      <div v-for="(item, i) in right" :key="'r'+i" class="row">
+        <span class="dot" :style="{ backgroundColor: color(item) }"></span>
+        <span class="text">{{ i + 1 + left.length }}.- {{ item.title }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { getStatusColor } from "~/utils/statusColor";
+
+const props = defineProps<{ rows: any[] }>();
+
+const mid = computed(() => Math.ceil((props.rows?.length ?? 0) / 2));
+const left = computed(() => (props.rows ?? []).slice(0, mid.value));
+const right = computed(() => (props.rows ?? []).slice(mid.value));
+
+function color(item: any) {
+  return getStatusColor(item);
+}
+</script>
+
+<style scoped>
+.wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.col {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 8px 6px;
+  border-bottom: 1px dashed rgba(255,255,255,0.06);
+}
+.row:last-child { border-bottom: none; }
+.dot { width: 10px; height: 10px; border-radius: 3px; margin-top: 4px; flex: 0 0 10px; }
+.text { font-size: 13px; color: var(--text); line-height: 1.25; }
+</style>
+
+## components/GlobalToDetailChart.vue
+
+<template>
+  <div class="card">
+    <div class="header">
+      <div class="title">{{ title }}</div>
+      <button class="btn" @click="toggleBack" :disabled="!selected">
+        {{ selected ? "Volver a Global" : "Global → Detalle (click)" }}
+      </button>
+    </div>
+
+    <div class="hint" v-if="!selected">
+      Click en un plantel para morph a detalle.
+    </div>
+
+    <client-only>
+      <VChart class="chart" :option="option" autoresize @click="onClick" />
+    </client-only>
+  </div>
+</template>
+
+<script setup lang="ts">
+import VChart from "vue-echarts";
+
+type GlobalRow = { plantelCode: string; plantelLabel: string; entregadas: number; noentregadas: number; destiempo: number; asignadas: number };
+
+const props = defineProps<{
+  title: string;
+  rows: GlobalRow[];
+}>();
+
+const selected = ref<string | null>(null);
+
+const option = computed(() => {
+  if (!selected.value) {
+    return {
+      tooltip: { trigger: "axis" },
+      grid: { left: 28, right: 18, top: 20, bottom: 52, containLabel: true },
+      xAxis: {
+        type: "category",
+        data: props.rows.map(r => r.plantelLabel),
+        axisLabel: { color: "#9ca3af", interval: 0, rotate: 25 },
+        axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+      },
+      yAxis: {
+        type: "value",
+        axisLabel: { color: "#9ca3af" },
+        splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+        axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+      },
+      series: [
+        {
+          type: "bar",
+          universalTransition: true,
+          data: props.rows.map(r => ({
+            name: r.plantelLabel,
+            value: r.entregadas,
+            _code: r.plantelCode
+          }))
+        }
+      ]
+    };
+  }
+
+  const r = props.rows.find(x => x.plantelCode === selected.value);
+  const detail = r
+    ? [
+        { name: "Entregadas", value: r.entregadas },
+        { name: "Destiempo", value: r.destiempo },
+        { name: "No entregó", value: r.noentregadas },
+        { name: "Asignadas", value: r.asignadas }
+      ]
+    : [];
+
+  return {
+    tooltip: { trigger: "axis" },
+    grid: { left: 28, right: 18, top: 20, bottom: 40, containLabel: true },
+    xAxis: {
+      type: "category",
+      data: detail.map(d => d.name),
+      axisLabel: { color: "#9ca3af" },
+      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#9ca3af" },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+      axisLine: { lineStyle: { color: "rgba(255,255,255,0.14)" } }
+    },
+    series: [
+      {
+        type: "bar",
+        universalTransition: true,
+        data: detail
+      }
+    ]
+  };
+});
+
+function onClick(e: any) {
+  if (selected.value) return;
+  const idx = e?.dataIndex;
+  if (typeof idx !== "number") return;
+  const code = props.rows[idx]?.plantelCode;
+  if (code) selected.value = code;
+}
+
+function toggleBack() {
+  selected.value = null;
+}
+</script>
+
+<style scoped>
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.title { font-weight: 900; }
+.hint { margin: 6px 0 10px; color: var(--muted); font-size: 12px; }
+.chart { width: 100%; height: 380px; }
+.btn {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:hover:not(:disabled) { border-color: rgba(96,165,250,0.55); }
+</style>
+
+## components/KpiCard.vue
+
+<template>
+  <div class="card">
+    <div class="title">{{ title }}</div>
+
+    <div class="values">
+      <div class="value">
+        <div class="label">{{ leftLabel }}</div>
+        <div class="num">{{ fmt(left) }}</div>
+      </div>
+
+      <div class="value">
+        <div class="label">{{ rightLabel }}</div>
+        <div class="num">{{ fmt(right) }}</div>
+      </div>
+
+      <div class="delta" :class="deltaClass">
+        <div class="label">Δ</div>
+        <div class="num">{{ fmt(delta) }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  title: string;
+  left: number;
+  right: number;
+  leftLabel?: string;
+  rightLabel?: string;
+}>();
+
+const leftLabel = computed(() => props.leftLabel ?? "A");
+const rightLabel = computed(() => props.rightLabel ?? "B");
+
+const delta = computed(() => (Number(props.left) || 0) - (Number(props.right) || 0));
+const deltaClass = computed(() => {
+  if (delta.value > 0) return "pos";
+  if (delta.value < 0) return "neg";
+  return "neu";
+});
+
+function fmt(n: any) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return "—";
+  return new Intl.NumberFormat("es-MX").format(x);
+}
+</script>
+
+<style scoped>
+.card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border-radius: 16px;
+  padding: 14px;
+}
+.title { font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.values { display: grid; grid-template-columns: 1fr 1fr 0.9fr; gap: 10px; }
+.value, .delta {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(0,0,0,0.15);
+}
+.label { font-size: 12px; color: var(--muted); }
+.num { font-size: 22px; font-weight: 900; margin-top: 4px; }
+.delta.pos { border-color: rgba(34,197,94,0.45); }
+.delta.neg { border-color: rgba(239,68,68,0.45); }
+.delta.neu { border-color: var(--border); }
+</style>

@@ -26,27 +26,33 @@ export default <MetricDefinition>{
     const year = Number(params.year);
 
     const sql = `
-      select A.asignadas, A.destiempo, A.entregadas, A.noentregadas,
-             (A.asignadas-A.entregadas-A.noentregadas) pendientes
-      from (
-        select count(id) asignadas,
-               SUM(IF(destiempo=1,1,0)) destiempo,
-               sum(if(status=1,1,0)) entregadas,
-               sum(case when deadline < now() and status = 0 then 1 else 0 END) noentregadas
-        from detalle
-        where dir_id = ? and month(deadline) = ? and year(deadline) = ?
+      SELECT
+        A.asignadas,
+        A.destiempo,
+        A.entregadas,
+        A.noentregadas,
+        (A.asignadas - A.entregadas - A.noentregadas) AS pendientes
+      FROM (
+        SELECT
+          COUNT(id) AS asignadas,
+          SUM(IF(destiempo=1,1,0)) AS destiempo,
+          SUM(IF(status=1,1,0)) AS entregadas,
+          SUM(CASE WHEN deadline < NOW() AND status = 0 THEN 1 ELSE 0 END) AS noentregadas
+        FROM detalle
+        WHERE dir_id = ?
+          AND MONTH(deadline) = ?
+          AND YEAR(deadline) = ?
       ) A
     `;
 
     const [rows] = await mysql.query<any[]>(sql, [id, month, year]);
-    const r = rows?.[0] ?? { asignadas: 0, destiempo: 0, entregadas: 0, noentregadas: 0, pendientes: 0 };
 
     return {
       metricId: "entregas",
       label: "Entregas Mensuales",
       params: { id, month, year },
       schema,
-      rows: [r],
+      rows,
       meta: { generatedAt: new Date().toISOString(), source: "mysql" }
     };
   }

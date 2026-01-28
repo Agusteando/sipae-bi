@@ -1,0 +1,244 @@
+{
+  "version": "1.0.0",
+  "metrics": {
+    "entregas": {
+      "id": "entregas",
+      "label": "Entregas Mensuales",
+      "defaultChartType": "kpi",
+      "allowedChartTypes": ["kpi", "bar", "pie", "line", "gauge"],
+      "colorScheme": "primary",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": true,
+        "targetMetric": "entregas_detalle",
+        "paramMapping": {
+          "plantel": "plantel",
+          "mes": "mes",
+          "year": "year"
+        }
+      }
+    },
+    "entregas_detalle": {
+      "id": "entregas_detalle",
+      "label": "Lista de Entregas",
+      "defaultChartType": "table",
+      "allowedChartTypes": ["table", "list"],
+      "colorScheme": "secondary",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "entregas_global": {
+      "id": "entregas_global",
+      "label": "Entregas Global",
+      "defaultChartType": "bar",
+      "allowedChartTypes": ["bar", "pie", "treemap", "heatmap"],
+      "colorScheme": "primary",
+      "showComparison": false,
+      "drilldown": {
+        "enabled": true,
+        "targetMetric": "entregas",
+        "paramMapping": {
+          "id": "plantelId",
+          "month": "month",
+          "year": "year"
+        }
+      }
+    },
+    "planeaciones": {
+      "id": "planeaciones",
+      "label": "Planeaciones Revisadas",
+      "defaultChartType": "progress",
+      "allowedChartTypes": ["progress", "bar", "table"],
+      "colorScheme": "success",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "bitacoras": {
+      "id": "bitacoras",
+      "label": "Bitácoras",
+      "defaultChartType": "calendar",
+      "allowedChartTypes": ["calendar", "heatmap", "table"],
+      "colorScheme": "info",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "observaciones": {
+      "id": "observaciones",
+      "label": "Observaciones GRUTA",
+      "defaultChartType": "html",
+      "allowedChartTypes": ["html", "text"],
+      "colorScheme": "warning",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "sapf": {
+      "id": "sapf",
+      "label": "Atención a Padres (SAPF)",
+      "defaultChartType": "bar",
+      "allowedChartTypes": ["bar", "pie", "radar", "table"],
+      "colorScheme": "accent",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "attendance": {
+      "id": "attendance",
+      "label": "Seguimiento a Ausencias",
+      "defaultChartType": "bar",
+      "allowedChartTypes": ["bar", "stackedBar", "line", "table"],
+      "colorScheme": "danger",
+      "showComparison": true,
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "ruta": {
+      "id": "ruta",
+      "label": "Ruta (conteo por observador)",
+      "defaultChartType": "bar",
+      "allowedChartTypes": ["bar", "pie", "table"],
+      "colorScheme": "primary",
+      "showComparison": false,
+      "drilldown": {
+        "enabled": false
+      }
+    }
+  },
+  "colorSchemes": {
+    "primary": {
+      "light": ["#3b82f6", "#60a5fa", "#93c5fd"],
+      "dark": ["#60a5fa", "#93c5fd", "#bfdbfe"]
+    },
+    "secondary": {
+      "light": ["#8b5cf6", "#a78bfa", "#c4b5fd"],
+      "dark": ["#a78bfa", "#c4b5fd", "#ddd6fe"]
+    },
+    "success": {
+      "light": ["#22c55e", "#4ade80", "#86efac"],
+      "dark": ["#4ade80", "#86efac", "#bbf7d0"]
+    },
+    "warning": {
+      "light": ["#f59e0b", "#fbbf24", "#fcd34d"],
+      "dark": ["#fbbf24", "#fcd34d", "#fde68a"]
+    },
+    "danger": {
+      "light": ["#ef4444", "#f87171", "#fca5a5"],
+      "dark": ["#f87171", "#fca5a5", "#fecaca"]
+    },
+    "info": {
+      "light": ["#06b6d4", "#22d3ee", "#67e8f9"],
+      "dark": ["#22d3ee", "#67e8f9", "#a5f3fc"]
+    },
+    "accent": {
+      "light": ["#ec4899", "#f472b6", "#f9a8d4"],
+      "dark": ["#f472b6", "#f9a8d4", "#fbcfe8"]
+    }
+  },
+  "chartTypes": {
+    "kpi": {
+      "label": "KPI Cards",
+      "icon": "chart-bar",
+      "description": "Key performance indicator cards with comparison"
+    },
+    "bar": {
+      "label": "Bar Chart",
+      "icon": "chart-bar",
+      "description": "Vertical bar chart for comparisons"
+    },
+    "stackedBar": {
+      "label": "Stacked Bar",
+      "icon": "chart-bar",
+      "description": "Stacked bar chart for composition"
+    },
+    "line": {
+      "label": "Line Chart",
+      "icon": "trending-up",
+      "description": "Line chart for trends over time"
+    },
+    "pie": {
+      "label": "Pie Chart",
+      "icon": "pie-chart",
+      "description": "Pie chart for proportions"
+    },
+    "gauge": {
+      "label": "Gauge",
+      "icon": "activity",
+      "description": "Gauge chart for progress"
+    },
+    "progress": {
+      "label": "Progress Bars",
+      "icon": "bar-chart-2",
+      "description": "Progress bars with percentages"
+    },
+    "table": {
+      "label": "Data Table",
+      "icon": "table",
+      "description": "Tabular data display"
+    },
+    "list": {
+      "label": "List View",
+      "icon": "list",
+      "description": "Simple list display"
+    },
+    "calendar": {
+      "label": "Calendar Grid",
+      "icon": "calendar",
+      "description": "Calendar-based visualization"
+    },
+    "heatmap": {
+      "label": "Heat Map",
+      "icon": "grid",
+      "description": "Color-coded heat map"
+    },
+    "treemap": {
+      "label": "Tree Map",
+      "icon": "layout",
+      "description": "Hierarchical tree map"
+    },
+    "radar": {
+      "label": "Radar Chart",
+      "icon": "target",
+      "description": "Multi-axis radar chart"
+    },
+    "html": {
+      "label": "HTML Content",
+      "icon": "code",
+      "description": "Custom HTML rendering"
+    },
+    "text": {
+      "label": "Text",
+      "icon": "file-text",
+      "description": "Plain text display"
+    }
+  },
+  "relationships": {
+    "plantel_hierarchy": {
+      "description": "Navigate from global view to specific plantel",
+      "levels": [
+        { "entity": "global", "label": "Todos los Planteles" },
+        { "entity": "campus", "label": "Por Campus", "groupBy": "campus" },
+        { "entity": "nivel", "label": "Por Nivel", "groupBy": "nivel" },
+        { "entity": "plantel", "label": "Plantel Individual" }
+      ]
+    },
+    "time_hierarchy": {
+      "description": "Navigate through time periods",
+      "levels": [
+        { "entity": "year", "label": "Año" },
+        { "entity": "quarter", "label": "Trimestre" },
+        { "entity": "month", "label": "Mes" },
+        { "entity": "week", "label": "Semana" },
+        { "entity": "day", "label": "Día" }
+      ]
+    }
+  }
+}

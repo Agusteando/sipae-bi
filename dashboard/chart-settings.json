@@ -1,0 +1,208 @@
+{
+  "version": "1.0.0",
+  "metrics": {
+    "entregas": {
+      "id": "entregas",
+      "label": "Entregas Mensuales",
+      "defaultChartType": "kpi",
+      "availableChartTypes": ["kpi", "bar", "pie", "line"],
+      "display": {
+        "showComparison": true,
+        "showDelta": true,
+        "colorScheme": "default"
+      },
+      "drilldown": {
+        "enabled": true,
+        "targetMetric": "entregas_detalle",
+        "linkField": "plantel"
+      }
+    },
+    "entregas_detalle": {
+      "id": "entregas_detalle",
+      "label": "Lista de Entregas",
+      "defaultChartType": "table",
+      "availableChartTypes": ["table", "list"],
+      "display": {
+        "showStatusColors": true,
+        "splitColumns": true
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "entregas_global": {
+      "id": "entregas_global",
+      "label": "Entregas Global",
+      "defaultChartType": "bar",
+      "availableChartTypes": ["bar", "horizontalBar", "pie", "table"],
+      "display": {
+        "showLegend": true,
+        "enableAnimation": true
+      },
+      "drilldown": {
+        "enabled": true,
+        "targetMetric": "entregas",
+        "linkField": "plantelCode"
+      }
+    },
+    "planeaciones": {
+      "id": "planeaciones",
+      "label": "Planeaciones Revisadas",
+      "defaultChartType": "progress",
+      "availableChartTypes": ["progress", "bar", "table"],
+      "display": {
+        "showPercentage": true,
+        "showTotals": true
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "bitacoras": {
+      "id": "bitacoras",
+      "label": "Bitácoras",
+      "defaultChartType": "calendar",
+      "availableChartTypes": ["calendar", "table", "heatmap"],
+      "display": {
+        "showLegend": true,
+        "weekdaysOnly": true
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "observaciones": {
+      "id": "observaciones",
+      "label": "Observaciones GRUTA",
+      "defaultChartType": "embedded",
+      "availableChartTypes": ["embedded"],
+      "display": {
+        "showText": true
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "sapf": {
+      "id": "sapf",
+      "label": "Atención a Padres (SAPF)",
+      "defaultChartType": "bar",
+      "availableChartTypes": ["bar", "horizontalBar", "pie", "line", "table"],
+      "display": {
+        "showComparison": true,
+        "enableAnimation": true
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    },
+    "attendance": {
+      "id": "attendance",
+      "label": "Seguimiento a Ausencias",
+      "defaultChartType": "bar",
+      "availableChartTypes": ["bar", "horizontalBar", "stackedBar", "table"],
+      "display": {
+        "showComparison": true,
+        "stackedMode": false
+      },
+      "drilldown": {
+        "enabled": true,
+        "targetMetric": "attendance_detail",
+        "linkField": "grupo"
+      }
+    },
+    "ruta": {
+      "id": "ruta",
+      "label": "Ruta (conteo por observador)",
+      "defaultChartType": "bar",
+      "availableChartTypes": ["bar", "horizontalBar", "pie", "table"],
+      "display": {
+        "sortBy": "quantity",
+        "sortOrder": "desc"
+      },
+      "drilldown": {
+        "enabled": false
+      }
+    }
+  },
+  "globalSettings": {
+    "animationsEnabled": true,
+    "defaultColorScheme": "default",
+    "comparisonMode": "sideBySide",
+    "dateFormat": "es-MX",
+    "numberFormat": "es-MX"
+  },
+  "colorSchemes": {
+    "default": {
+      "primary": ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"],
+      "comparison": ["#3b82f6", "#94a3b8"]
+    },
+    "vibrant": {
+      "primary": ["#f43f5e", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"],
+      "comparison": ["#f43f5e", "#64748b"]
+    },
+    "earth": {
+      "primary": ["#78716c", "#a16207", "#65a30d", "#0891b2", "#7c3aed", "#dc2626"],
+      "comparison": ["#78716c", "#d6d3d1"]
+    },
+    "ocean": {
+      "primary": ["#0284c7", "#0891b2", "#059669", "#7c3aed", "#be185d", "#ea580c"],
+      "comparison": ["#0284c7", "#94a3b8"]
+    }
+  },
+  "relationships": {
+    "entities": {
+      "plantel": {
+        "key": "plantel",
+        "displayField": "label",
+        "codeField": "code"
+      },
+      "teacher": {
+        "key": "teacher",
+        "displayField": "name"
+      },
+      "department": {
+        "key": "department",
+        "displayField": "depto"
+      }
+    },
+    "links": [
+      {
+        "id": "global-to-plantel",
+        "fromMetric": "entregas_global",
+        "fromKey": "plantelCode",
+        "toMetric": "entregas",
+        "toKey": "id",
+        "entity": "plantel",
+        "label": "Ver detalle de plantel"
+      },
+      {
+        "id": "entregas-to-detalle",
+        "fromMetric": "entregas",
+        "fromKey": "plantel",
+        "toMetric": "entregas_detalle",
+        "toKey": "plantel",
+        "entity": "plantel",
+        "label": "Ver lista de entregas"
+      },
+      {
+        "id": "ruta-to-teacher",
+        "fromMetric": "ruta",
+        "fromKey": "observatorName",
+        "toMetric": "ruta",
+        "toKey": "observatorName",
+        "entity": "teacher",
+        "label": "Filtrar por observador"
+      },
+      {
+        "id": "attendance-to-detail",
+        "fromMetric": "attendance",
+        "fromKey": "grupo",
+        "toMetric": "attendance",
+        "toKey": "grupo",
+        "entity": "grupo",
+        "label": "Ver detalle de grupo"
+      }
+    ]
+  }
+}
