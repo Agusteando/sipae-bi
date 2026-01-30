@@ -26,6 +26,14 @@ export default defineNuxtConfig({
     shim: false,
   },
 
+  /**
+   * 🔴 IMPORTANT: Disable OXC on Windows
+   * Avoids native binding failures (`oxc-parser`)
+   */
+  experimental: {
+    parser: "acorn",
+  },
+
   runtimeConfig: {
     dbHost: process.env.DB_HOST,
     dbUser: process.env.DB_USER,
