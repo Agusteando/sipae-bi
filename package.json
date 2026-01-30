@@ -3,11 +3,11 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "build": "node -r ./scripts/crypto-hash-polyfill.cjs ./node_modules/nuxt/bin/nuxt.mjs build",
+    "dev": "node -r ./scripts/crypto-hash-polyfill.cjs ./node_modules/nuxt/bin/nuxt.mjs dev",
+    "generate": "node -r ./scripts/crypto-hash-polyfill.cjs ./node_modules/nuxt/bin/nuxt.mjs generate",
+    "preview": "node -r ./scripts/crypto-hash-polyfill.cjs ./node_modules/nuxt/bin/nuxt.mjs preview",
+    "postinstall": "node -r ./scripts/crypto-hash-polyfill.cjs ./node_modules/nuxt/bin/nuxt.mjs prepare"
   },
   "dependencies": {
     "echarts": "^6.0.0",
@@ -20,6 +20,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@oxc-parser/binding-win32-x64-msvc": "0.110.0",
     "@types/papaparse": "^5.5.2"
   }
 }
