@@ -1,15 +1,6 @@
 export default defineNuxtConfig({
-  /**
-   * This is the switch that decides where Nuxt looks for `app.vue`, `pages/`, etc.
-   * If your project ended up with a different srcDir, Nuxt will ignore root `app.vue`.
-   * For your setup, force Nuxt to use the repository root.
-   */
   srcDir: ".",
 
-  /**
-   * Be explicit about directory locations to avoid Nuxt resolving to `src/` or `app/`
-   * depending on template / prior config.
-   */
   dir: {
     pages: "pages",
     layouts: "layouts",
@@ -26,12 +17,17 @@ export default defineNuxtConfig({
     shim: false,
   },
 
-  /**
-   * 🔴 IMPORTANT: Disable OXC on Windows
-   * Avoids native binding failures (`oxc-parser`)
-   */
   experimental: {
     parser: "acorn",
+  },
+
+  // ✅ Force Nitro to copy jiti's lazily-required babel runtime into .output
+  nitro: {
+    externals: {
+      traceInclude: [
+        "node_modules/jiti/dist/babel.cjs"
+      ]
+    }
   },
 
   runtimeConfig: {
